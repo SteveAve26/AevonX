@@ -4,29 +4,41 @@ import { useState, useEffect } from 'react';
 import { Search, ArrowRight, Clock, CheckCircle, XCircle, AlertCircle, ExternalLink, Loader2, LogIn } from 'lucide-react';
 import { exchangerApi } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import { recentOrders as fallbackOrders } from '@/lib/mock/data';
-import { ExchangeOrder } from '@/types';
+import { OrderHistoryResponse, OrderResponse } from '@/types';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
+// Order type from history response
+type HistoryOrder = OrderHistoryResponse['orders'][number];
+
 const statusConfig: Record<string, { icon: typeof Clock; color: string; bg: string }> = {
+  new: { icon: Clock, color: 'text-[#848e9c]', bg: 'bg-[#848e9c]/10' },
+  waitPayment: { icon: Clock, color: 'text-[#f0b90b]', bg: 'bg-[#f0b90b]/10' },
   pending: { icon: Clock, color: 'text-[#848e9c]', bg: 'bg-[#848e9c]/10' },
   waiting: { icon: Clock, color: 'text-[#f0b90b]', bg: 'bg-[#f0b90b]/10' },
   confirming: { icon: AlertCircle, color: 'text-[#f0b90b]', bg: 'bg-[#f0b90b]/10' },
+  inProgress: { icon: AlertCircle, color: 'text-[#1e90ff]', bg: 'bg-[#1e90ff]/10' },
+  inProgressPayout: { icon: AlertCircle, color: 'text-[#1e90ff]', bg: 'bg-[#1e90ff]/10' },
   exchanging: { icon: AlertCircle, color: 'text-[#1e90ff]', bg: 'bg-[#1e90ff]/10' },
+  done: { icon: CheckCircle, color: 'text-[#0ecb81]', bg: 'bg-[#0ecb81]/10' },
   completed: { icon: CheckCircle, color: 'text-[#0ecb81]', bg: 'bg-[#0ecb81]/10' },
+  hold: { icon: AlertCircle, color: 'text-[#f0b90b]', bg: 'bg-[#f0b90b]/10' },
   failed: { icon: XCircle, color: 'text-[#f6465d]', bg: 'bg-[#f6465d]/10' },
   cancelled: { icon: XCircle, color: 'text-[#f6465d]', bg: 'bg-[#f6465d]/10' },
+  cancel: { icon: XCircle, color: 'text-[#f6465d]', bg: 'bg-[#f6465d]/10' },
 };
 
 export default function OrdersPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const [orders, setOrders] = useState<ExchangeOrder[]>([]);
+  const [orders, setOrders] = useState<HistoryOrder[]>([]);
   const [searchId, setSearchId] = useState('');
   const [filter, setFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
-  const [trackOrderId, setTrackOrderId] = useState('');
-  const [trackedOrder, setTrackedOrder] = useState<ExchangeOrder | null>(null);
+
+  // Track order state
+  const [trackOrderUID, setTrackOrderUID] = useState('');
+  const [trackOrderSecret, setTrackOrderSecret] = useState('');
+  const [trackedOrder, setTrackedOrder] = useState<OrderResponse['order'] | null>(null);
   const [trackError, setTrackError] = useState('');
   const [isTracking, setIsTracking] = useState(false);
 
@@ -47,8 +59,7 @@ export default function OrdersPage() {
         }
       } catch (err) {
         console.error('Failed to fetch orders:', err);
-        // Use fallback data for demo
-        setOrders(fallbackOrders);
+        setOrders([]);
       } finally {
         setIsLoading(false);
       }
@@ -58,30 +69,30 @@ export default function OrdersPage() {
     }
   }, [isAuthenticated, authLoading]);
 
-  // Track single order by ID
+  // Track single order by UID and secret
   const handleTrackOrder = async () => {
-    if (!trackOrderId.trim()) return;
+    if (!trackOrderUID.trim() || !trackOrderSecret.trim()) return;
 
     setIsTracking(true);
     setTrackError('');
     setTrackedOrder(null);
 
     try {
-      const response = await exchangerApi.getOrder(trackOrderId.trim());
+      const response = await exchangerApi.getOrder(Number(trackOrderUID), trackOrderSecret.trim());
       if (response.success && response.data) {
-        setTrackedOrder(response.data);
+        setTrackedOrder(response.data.order);
       } else {
         setTrackError(response.error || 'Order not found');
       }
-    } catch (err) {
-      setTrackError('Failed to track order. Please check the ID and try again.');
+    } catch {
+      setTrackError('Failed to track order. Please check the ID and secret and try again.');
     } finally {
       setIsTracking(false);
     }
   };
 
   const filteredOrders = orders.filter((order) => {
-    if (searchId && !order.id.toLowerCase().includes(searchId.toLowerCase())) {
+    if (searchId && !String(order.uid).includes(searchId) && !order.rid.toLowerCase().includes(searchId.toLowerCase())) {
       return false;
     }
     if (filter !== 'all' && order.status !== filter) {
@@ -133,7 +144,7 @@ export default function OrdersPage() {
                 type="text"
                 value={searchId}
                 onChange={(e) => setSearchId(e.target.value)}
-                placeholder="Search by Order ID..."
+                placeholder="Search by Order ID or RID..."
                 className="w-full pl-11 pr-4 py-3 bg-[#1e2329] border border-[#2b3139] rounded-xl text-white placeholder-[#848e9c] focus:outline-none focus:border-[#f0b90b]"
               />
             </div>
@@ -143,11 +154,11 @@ export default function OrdersPage() {
               className="px-4 py-3 bg-[#1e2329] border border-[#2b3139] rounded-xl text-white focus:outline-none focus:border-[#f0b90b]"
             >
               <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="waiting">Waiting</option>
-              <option value="exchanging">Exchanging</option>
-              <option value="completed">Completed</option>
-              <option value="failed">Failed</option>
+              <option value="new">New</option>
+              <option value="waitPayment">Waiting Payment</option>
+              <option value="inProgress">In Progress</option>
+              <option value="done">Completed</option>
+              <option value="cancel">Cancelled</option>
             </select>
           </div>
 
@@ -156,12 +167,14 @@ export default function OrdersPage() {
             {filteredOrders.map((order) => {
               const status = statusConfig[order.status] || statusConfig.pending;
               const StatusIcon = status.icon;
+              const fromSymbol = order.route.from.symbol;
+              const toSymbol = order.route.to.symbol;
 
               return (
-                <div key={order.id} className="bg-[#1e2329] rounded-xl p-5">
+                <div key={order._id} className="bg-[#1e2329] rounded-xl p-5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                     <div className="flex items-center gap-3">
-                      <code className="text-[#848e9c] text-sm">#{order.id}</code>
+                      <code className="text-[#848e9c] text-sm">#{order.uid}</code>
                       <div className={cn('flex items-center gap-1 px-2 py-1 rounded text-xs font-medium', status.bg, status.color)}>
                         <StatusIcon size={12} />
                         {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
@@ -176,11 +189,19 @@ export default function OrdersPage() {
                     <div className="flex-1 bg-[#2b3139] rounded-lg p-3">
                       <div className="text-xs text-[#848e9c] mb-1">You Send</div>
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-[#f0b90b]/20 rounded-full flex items-center justify-center text-xs font-bold text-[#f0b90b]">
-                          {order.fromCurrency.code.slice(0, 2)}
-                        </div>
+                        {order.route.from.image?.files?.[0]?.url ? (
+                          <img
+                            src={order.route.from.image.files[0].url}
+                            alt={fromSymbol}
+                            className="w-6 h-6 rounded-full"
+                          />
+                        ) : (
+                          <div className="w-6 h-6 bg-[#f0b90b]/20 rounded-full flex items-center justify-center text-xs font-bold text-[#f0b90b]">
+                            {fromSymbol.slice(0, 2)}
+                          </div>
+                        )}
                         <span className="text-white font-medium">
-                          {order.fromAmount} {order.fromCurrency.code}
+                          {order.inAmount} {fromSymbol}
                         </span>
                       </div>
                     </div>
@@ -190,11 +211,19 @@ export default function OrdersPage() {
                     <div className="flex-1 bg-[#2b3139] rounded-lg p-3">
                       <div className="text-xs text-[#848e9c] mb-1">You Receive</div>
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-[#0ecb81]/20 rounded-full flex items-center justify-center text-xs font-bold text-[#0ecb81]">
-                          {order.toCurrency.code.slice(0, 2)}
-                        </div>
+                        {order.route.to.image?.files?.[0]?.url ? (
+                          <img
+                            src={order.route.to.image.files[0].url}
+                            alt={toSymbol}
+                            className="w-6 h-6 rounded-full"
+                          />
+                        ) : (
+                          <div className="w-6 h-6 bg-[#0ecb81]/20 rounded-full flex items-center justify-center text-xs font-bold text-[#0ecb81]">
+                            {toSymbol.slice(0, 2)}
+                          </div>
+                        )}
                         <span className="text-white font-medium">
-                          {order.toAmount.toLocaleString()} {order.toCurrency.code}
+                          {order.outAmount.toLocaleString()} {toSymbol}
                         </span>
                       </div>
                     </div>
@@ -202,12 +231,15 @@ export default function OrdersPage() {
 
                   <div className="flex items-center justify-between text-sm">
                     <div className="text-[#848e9c]">
-                      Rate: 1 {order.fromCurrency.code} = {order.rate.toFixed(order.rate >= 1 ? 2 : 8)} {order.toCurrency.code}
+                      Rate: 1 {fromSymbol} = {(order.outAmount / order.inAmount).toFixed(order.outAmount / order.inAmount >= 1 ? 2 : 8)} {toSymbol}
                     </div>
-                    <button className="flex items-center gap-1 text-[#f0b90b] hover:underline">
+                    <Link
+                      href={`/order/${order.uid}`}
+                      className="flex items-center gap-1 text-[#f0b90b] hover:underline"
+                    >
                       View Details
                       <ExternalLink size={14} />
-                    </button>
+                    </Link>
                   </div>
                 </div>
               );
@@ -222,24 +254,33 @@ export default function OrdersPage() {
         </>
       )}
 
-      {/* Track Order by ID */}
+      {/* Track Order by UID and Secret */}
       <div className="mt-12 bg-[#1e2329] rounded-xl p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Track Order</h3>
         <p className="text-[#848e9c] text-sm mb-4">
-          Enter your order ID to track its status without logging in.
+          Enter your order ID and secret to track its status without logging in.
         </p>
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={trackOrderId}
-            onChange={(e) => setTrackOrderId(e.target.value)}
-            placeholder="Enter Order ID"
-            className="flex-1 px-4 py-3 bg-[#2b3139] rounded-lg text-white placeholder-[#848e9c] focus:outline-none focus:ring-2 focus:ring-[#f0b90b]"
-          />
+        <div className="space-y-3">
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={trackOrderUID}
+              onChange={(e) => setTrackOrderUID(e.target.value)}
+              placeholder="Order ID (e.g., 12345)"
+              className="flex-1 px-4 py-3 bg-[#2b3139] rounded-lg text-white placeholder-[#848e9c] focus:outline-none focus:ring-2 focus:ring-[#f0b90b]"
+            />
+            <input
+              type="text"
+              value={trackOrderSecret}
+              onChange={(e) => setTrackOrderSecret(e.target.value)}
+              placeholder="Order Secret"
+              className="flex-1 px-4 py-3 bg-[#2b3139] rounded-lg text-white placeholder-[#848e9c] focus:outline-none focus:ring-2 focus:ring-[#f0b90b]"
+            />
+          </div>
           <button
             onClick={handleTrackOrder}
-            disabled={isTracking || !trackOrderId.trim()}
-            className="px-6 py-3 bg-[#f0b90b] text-black font-medium rounded-lg hover:bg-[#d9a60a] transition-colors disabled:opacity-50 flex items-center gap-2"
+            disabled={isTracking || !trackOrderUID.trim() || !trackOrderSecret.trim()}
+            className="w-full sm:w-auto px-6 py-3 bg-[#f0b90b] text-black font-medium rounded-lg hover:bg-[#d9a60a] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isTracking ? (
               <>
@@ -247,7 +288,7 @@ export default function OrdersPage() {
                 Tracking...
               </>
             ) : (
-              'Track'
+              'Track Order'
             )}
           </button>
         </div>
@@ -264,7 +305,7 @@ export default function OrdersPage() {
           <div className="mt-4 bg-[#2b3139] rounded-xl p-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
-                <code className="text-[#848e9c] text-sm">#{trackedOrder.id}</code>
+                <code className="text-[#848e9c] text-sm">#{trackedOrder.uid}</code>
                 {(() => {
                   const status = statusConfig[trackedOrder.status] || statusConfig.pending;
                   const StatusIcon = status.icon;
@@ -285,11 +326,19 @@ export default function OrdersPage() {
               <div className="flex-1 bg-[#1e2329] rounded-lg p-3">
                 <div className="text-xs text-[#848e9c] mb-1">You Send</div>
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-[#f0b90b]/20 rounded-full flex items-center justify-center text-xs font-bold text-[#f0b90b]">
-                    {trackedOrder.fromCurrency.code.slice(0, 2)}
-                  </div>
+                  {trackedOrder.route.from.image?.files?.[0]?.url ? (
+                    <img
+                      src={trackedOrder.route.from.image.files[0].url}
+                      alt={trackedOrder.route.from.symbol}
+                      className="w-6 h-6 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 bg-[#f0b90b]/20 rounded-full flex items-center justify-center text-xs font-bold text-[#f0b90b]">
+                      {trackedOrder.route.from.symbol.slice(0, 2)}
+                    </div>
+                  )}
                   <span className="text-white font-medium">
-                    {trackedOrder.fromAmount} {trackedOrder.fromCurrency.code}
+                    {trackedOrder.inAmount} {trackedOrder.route.from.symbol}
                   </span>
                 </div>
               </div>
@@ -299,15 +348,37 @@ export default function OrdersPage() {
               <div className="flex-1 bg-[#1e2329] rounded-lg p-3">
                 <div className="text-xs text-[#848e9c] mb-1">You Receive</div>
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-[#0ecb81]/20 rounded-full flex items-center justify-center text-xs font-bold text-[#0ecb81]">
-                    {trackedOrder.toCurrency.code.slice(0, 2)}
-                  </div>
+                  {trackedOrder.route.to.image?.files?.[0]?.url ? (
+                    <img
+                      src={trackedOrder.route.to.image.files[0].url}
+                      alt={trackedOrder.route.to.symbol}
+                      className="w-6 h-6 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 bg-[#0ecb81]/20 rounded-full flex items-center justify-center text-xs font-bold text-[#0ecb81]">
+                      {trackedOrder.route.to.symbol.slice(0, 2)}
+                    </div>
+                  )}
                   <span className="text-white font-medium">
-                    {trackedOrder.toAmount.toLocaleString()} {trackedOrder.toCurrency.code}
+                    {trackedOrder.outAmount.toLocaleString()} {trackedOrder.route.to.symbol}
                   </span>
                 </div>
               </div>
             </div>
+
+            {/* Additional order info */}
+            {trackedOrder.comment && (
+              <div className="mt-4 p-3 bg-[#1e2329] rounded-lg">
+                <div className="text-xs text-[#848e9c] mb-1">Note</div>
+                <div className="text-white text-sm">{trackedOrder.comment}</div>
+              </div>
+            )}
+
+            {trackedOrder.expiresAt && new Date(trackedOrder.expiresAt) > new Date() && (
+              <div className="mt-4 text-sm text-[#848e9c]">
+                Expires: {new Date(trackedOrder.expiresAt).toLocaleString()}
+              </div>
+            )}
           </div>
         )}
       </div>

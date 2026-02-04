@@ -586,3 +586,285 @@ export interface ApiKeyAccess {
   createdAt: Date | string;
   updatedAt: Date | string;
 }
+
+// ============ Exchanger Response Types ============
+
+// Routes V2 response with currencies map
+export interface RoutesV2Response {
+  isUpdated: boolean;
+  currencies: Record<string, {
+    id: string;
+    xml: string;
+    name: string;
+    symbol: string;
+    image: string;
+    positionIn: number;
+    positionOut: number;
+    reserveAmount: number;
+    isActive: boolean;
+  }>;
+  routes: Array<{
+    routeId: string;
+    from: string;           // Currency ID
+    to: string;             // Currency ID
+    isShowWeb: boolean;
+    isShowBot: boolean;
+    reserveAmountAdditional: number;
+    seoFriendlyURL: string;
+  }>;
+}
+
+// Route detail response
+export interface RouteDetailResponse {
+  route: {
+    routeId: string;
+    instructions?: string;
+    requiredDocuments?: string;
+    from: {
+      _id?: string;
+      name: string;
+      symbol: string;
+      xml: string;
+      decimal: number;
+      verification?: boolean;
+      verificationText?: string;
+      discounts?: Array<{ minAmount: number; maxAmount: number; percent: number }>;
+      fields?: RouteField[];
+      paymentDetails?: {
+        merchantEnabled?: boolean;
+        merchant?: {
+          template: string;
+          data: unknown;
+        };
+        amlEnabled?: boolean;
+        aml?: unknown;
+      };
+      min?: number;
+      max?: number;
+      image?: { files: { type: string; url: string }[] };
+      usdRate?: number;
+    };
+    to: {
+      _id?: string;
+      name: string;
+      symbol: string;
+      xml: string;
+      decimal: number;
+      verificationPayout?: boolean;
+      verificationPayoutText?: string;
+      payoutEnabled?: boolean;
+      payout?: string;
+      fields?: RouteField[];
+      image?: { files: { type: string; url: string }[] };
+      usdRate?: number;
+      minFee?: number;
+      amlPayoutEnabled?: boolean;
+      amlPayout?: unknown;
+    };
+    fields?: RouteField[];
+    rate: {
+      in: number;
+      out: number;
+      rateFullNumber?: string;
+      typeCalculate?: string;
+      changePercentReCalculate?: number;
+      amount?: number;
+      outFeeAmount?: number;
+      outFeeMinimal?: number;
+      changeFeePercent?: number;
+      lossFeePercent?: number;
+      lossFeeAmount?: number;
+      sourceType?: string;
+      specialReserve?: number;
+    };
+    additionalServices?: Array<{
+      _id: string;
+      title: string;
+      description: string;
+      amount: number;
+    }>;
+    verification?: boolean;
+    verificationText?: string;
+    verificationRequiredImagesCount?: number;
+    requiredVerificationUser?: boolean;
+    requiredVerificationPhone?: boolean;
+    requiredOnlyForAuthed?: boolean;
+    isAutoPayout?: boolean;
+    seo?: { friendlyURL: string };
+    orderTTL?: number;
+    disableUserDiscounts?: boolean;
+  };
+}
+
+// Route field definition
+export interface RouteField {
+  _id: string;
+  name: string;
+  type: string;
+  required: boolean;
+  placeholder?: string;
+  description?: string;
+  regex?: string;
+  min?: number;
+  max?: number;
+  options?: string[];
+}
+
+// Order response (create/get)
+export interface OrderResponse {
+  order: {
+    TYPE?: string;
+    _id: string;
+    rid: string;
+    uid: number;
+    partner?: string;
+    inAmount: number;
+    outAmount: number;
+    fromValues?: Array<{ field?: string; name?: string; key?: string; value: string }>;
+    toValues?: Array<{ field?: string; name?: string; key?: string; value: string }>;
+    routeValues?: Array<{ field?: string; name?: string; key?: string; value: string }>;
+    status: string;
+    createdAt: string;
+    clientCallbackUrl?: string;
+    comment?: string;
+    route: {
+      routeId: string;
+      instructions?: string;
+      requiredDocuments?: string;
+      from: {
+        _id?: string;
+        name: string;
+        symbol: string;
+        xml: string;
+        decimal: number;
+        verification?: boolean;
+        verificationText?: string;
+        paymentDetails?: {
+          merchantEnabled?: boolean;
+          merchant?: {
+            template: string;
+            data: unknown;
+          };
+        };
+        image?: { files: { type: string; url: string }[] };
+      };
+      to: {
+        _id?: string;
+        name: string;
+        symbol: string;
+        xml: string;
+        decimal: number;
+        verificationPayout?: boolean;
+        verificationPayoutText?: string;
+        image?: { files: { type: string; url: string }[] };
+      };
+      verification?: boolean;
+      verificationText?: string;
+      verificationRequiredImagesCount?: number;
+    };
+    expiresAt: string;
+    telegram?: unknown;
+    rate: number;
+    rateTypeCalculate?: string;
+    feeToAmount?: number;
+    additionalParams?: unknown;
+  };
+  verifications?: Array<{
+    _id: string;
+    status: string;
+    type: string;
+  }>;
+}
+
+// Order create response (simplified)
+export interface OrderCreateResponse {
+  uid: number;
+  secret: string;
+  rid: string;
+  status: string;
+  route: {
+    from: { name: string; symbol: string };
+    to: { name: string; symbol: string };
+    inAmount: number;
+    outAmount: number;
+  };
+  expiresAt: string;
+}
+
+// Last orders response
+export interface LastOrdersResponse {
+  orders: Array<{
+    typeClient: string;
+    inAmount: number;
+    outAmount: number;
+    createdAt: string;
+    route: {
+      routeId: string;
+      from: {
+        name: string;
+        symbol: string;
+        xml: string;
+        decimal: number;
+        image?: { files: { type: string; url: string }[] };
+      };
+      to: {
+        name: string;
+        symbol: string;
+        xml: string;
+        decimal: number;
+        image?: { files: { type: string; url: string }[] };
+      };
+    };
+  }>;
+  disable: boolean;
+}
+
+// Order history response
+export interface OrderHistoryResponse {
+  orders: Array<{
+    _id: string;
+    uid: number;
+    rid: string;
+    status: string;
+    inAmount: number;
+    outAmount: number;
+    createdAt: string;
+    updatedAt?: string;
+    route: {
+      routeId: string;
+      from: {
+        name: string;
+        symbol: string;
+        xml: string;
+        decimal: number;
+        image?: { files: { type: string; url: string }[] };
+      };
+      to: {
+        name: string;
+        symbol: string;
+        xml: string;
+        decimal: number;
+        image?: { files: { type: string; url: string }[] };
+      };
+    };
+    expiresAt?: string;
+  }>;
+  count: {
+    total: number;
+    pages: number;
+    select_page: number;
+    limit: number;
+    offset: number;
+  };
+}
+
+// Order chart data response
+export interface OrderChartResponse {
+  statistics: Array<{
+    date: string;
+    sumAmountsUSD: number;
+    avgAmountsUSD: number;
+    doneOrders: number;
+    count: number;
+  }>;
+}

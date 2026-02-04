@@ -216,18 +216,23 @@ export default function ExchangeForm() {
     try {
       const response = await exchangerApi.createOrder({
         routeId: currentRoute.id,
-        fromAmount: parseFloat(fromAmount),
-        toAddress,
-        email: email || undefined,
+        amount: parseFloat(fromAmount),  // Positive amount = "from" currency amount
+        toValues: [
+          { key: 'address', value: toAddress },
+          ...(email ? [{ key: 'email', value: email }] : []),
+        ],
+        agreement: true,
+        disableEmailNotify: !email,
       });
 
       if (response.success && response.data) {
-        // Redirect to order page or show success
-        window.location.href = `/orders?id=${response.data.id}`;
+        // Redirect to order page with uid and secret
+        const order = response.data.order;
+        window.location.href = `/order/${order.uid}?secret=${order.rid}`;
       } else {
         setError(response.error || 'Failed to create order');
       }
-    } catch (err) {
+    } catch {
       setError('Network error. Please try again.');
     } finally {
       setIsSubmitting(false);
