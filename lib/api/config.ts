@@ -1,5 +1,6 @@
 // API Configuration
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.develop.exchange/service';
+// Use local proxy to bypass CORS issues
+export const API_BASE_URL = '/api/proxy';
 
 export interface ApiResponse<T> {
   success: boolean;
