@@ -18,6 +18,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "AevonX - Crypto Exchange",
   description: "Trade cryptocurrencies with AevonX - Fast, secure, and reliable crypto trading platform",
+  icons: {
+    icon: '/icon',
+    apple: '/apple-icon',
+  },
 };
 
 export default function RootLayout({
