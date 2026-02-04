@@ -1,5 +1,5 @@
 import apiClient from './config';
-import { User, VerificationStatus } from '@/types';
+import { User, VerificationStatus, FileUploadResponse } from '@/types';
 
 export const userApi = {
   // Get profile details
@@ -56,6 +56,18 @@ export const userApi = {
   // Init verification process
   initVerification: (level: number) =>
     apiClient.post<{ message: string }>('/user/verification/init', { level }),
+
+  // ========== Files ==========
+
+  // Upload image file
+  // @param image - Image file to upload
+  // @param type - Image type enum (e.g., 'avatar', 'verification', etc.)
+  uploadImage: (image: File, type: string) => {
+    const formData = new FormData();
+    formData.append('image', image);
+    formData.append('type', type);
+    return apiClient.post<FileUploadResponse>('/user/files/upload/image', formData);
+  },
 };
 
 export default userApi;

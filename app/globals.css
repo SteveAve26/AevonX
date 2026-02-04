@@ -122,7 +122,7 @@ input[type="number"] {
 }
 
 .animate-fade-in-down {
-  animation: fadeInDown 0.5s ease-out forwards;
+  animation: fadeInDown 0.6s ease-out both;
 }
 
 /* Scale In */
@@ -397,4 +397,500 @@ input[type="number"] {
 ::selection {
   background: var(--primary);
   color: var(--background);
+}
+
+/* ========================================
+   ADVANCED ANIMATIONS
+   ======================================== */
+
+/* Shimmer text animation */
+@keyframes shimmerText {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-shimmer-text {
+  animation: shimmerText 3s linear infinite;
+}
+
+/* Slide up fade */
+@keyframes slideUpFade {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Slide in from left */
+@keyframes slideInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-left {
+  animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Slide in from right */
+@keyframes slideInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-right {
+  animation: slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Scale fade in */
+@keyframes scaleFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-fade {
+  animation: scaleFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Blur fade in */
+@keyframes blurFadeIn {
+  0% {
+    opacity: 0;
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.animate-blur-in {
+  animation: blurFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Rotate in */
+@keyframes rotateIn {
+  0% {
+    opacity: 0;
+    transform: rotate(-10deg) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+  }
+}
+
+.animate-rotate-in {
+  animation: rotateIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Pulse scale */
+@keyframes pulseScale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-scale {
+  animation: pulseScale 2s ease-in-out infinite;
+}
+
+/* Wiggle */
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-3deg);
+  }
+  75% {
+    transform: rotate(3deg);
+  }
+}
+
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+/* Heartbeat */
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.1);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.1);
+  }
+  70% {
+    transform: scale(1);
+  }
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+/* Wave */
+@keyframes wave {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-5px);
+  }
+  50% {
+    transform: translateY(0);
+  }
+  75% {
+    transform: translateY(5px);
+  }
+}
+
+.animate-wave {
+  animation: wave 2s ease-in-out infinite;
+}
+
+/* Ripple effect */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::after {
+  content: '';
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background: var(--primary);
+  opacity: 0;
+  border-radius: 50%;
+  transform: scale(0);
+  pointer-events: none;
+}
+
+.ripple-effect:active::after {
+  animation: ripple 0.6s ease-out;
+}
+
+/* Morphing background */
+@keyframes morphBg {
+  0%, 100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  50% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+}
+
+.animate-morph {
+  animation: morphBg 8s ease-in-out infinite;
+}
+
+/* Typewriter cursor */
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.typewriter-cursor::after {
+  content: '|';
+  animation: blink 1s step-end infinite;
+  color: var(--primary);
+}
+
+/* Gradient border animation */
+@keyframes gradientBorder {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-border {
+  background: linear-gradient(90deg, var(--primary), var(--green), var(--primary));
+  background-size: 200% 200%;
+  animation: gradientBorder 3s ease infinite;
+}
+
+/* 3D hover card */
+.card-3d {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.card-3d:hover {
+  transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) translateY(-5px);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.3),
+    0 10px 10px -5px rgba(0, 0, 0, 0.2),
+    0 0 40px -10px rgba(240, 185, 11, 0.15);
+}
+
+/* Neon glow */
+.neon-glow {
+  text-shadow:
+    0 0 5px var(--primary),
+    0 0 10px var(--primary),
+    0 0 20px var(--primary),
+    0 0 40px var(--primary);
+}
+
+/* Reveal line */
+.reveal-line {
+  position: relative;
+  overflow: hidden;
+}
+
+.reveal-line::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-line:hover::after {
+  transform: translateX(100%);
+}
+
+/* Magnetic button hover */
+.magnetic-btn {
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Parallax layers */
+.parallax-slow {
+  transform: translateY(calc(var(--scroll-y, 0) * 0.3));
+}
+
+.parallax-medium {
+  transform: translateY(calc(var(--scroll-y, 0) * 0.5));
+}
+
+.parallax-fast {
+  transform: translateY(calc(var(--scroll-y, 0) * 0.7));
+}
+
+/* ========================================
+   CRYPTO ICONS FLOATING ANIMATION
+   ======================================== */
+
+@keyframes floatCrypto {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-15px) rotate(2deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-20px) rotate(-2deg);
+  }
+}
+
+.animate-float-crypto {
+  animation: floatCrypto 4s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px currentColor;
+    opacity: 0.8;
+  }
+  50% {
+    box-shadow: 0 0 40px currentColor, 0 0 60px currentColor;
+    opacity: 1;
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* Line drawing animation */
+@keyframes drawLine {
+  0% {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.3;
+  }
+}
+
+.animate-draw-line {
+  animation: drawLine 3s ease-in-out infinite;
+}
+
+/* Scroll indicator animation */
+@keyframes scrollIndicator {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(8px);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-scroll-indicator {
+  animation: scrollIndicator 1.5s ease-in-out infinite;
+}
+
+/* Radial gradient background */
+.bg-gradient-radial {
+  background: radial-gradient(circle, var(--tw-gradient-from) 0%, var(--tw-gradient-to) 70%);
+}
+
+/* Text reveal animation */
+@keyframes textReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) rotateX(-20deg);
+    filter: blur(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0);
+    filter: blur(0);
+  }
+}
+
+.animate-text-reveal {
+  animation: textReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Staggered word animation */
+@keyframes wordFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.9);
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.animate-word-fade-in {
+  animation: wordFadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Glowing border animation */
+@keyframes glowBorder {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--primary), inset 0 0 5px transparent;
+  }
+  50% {
+    box-shadow: 0 0 20px var(--primary), inset 0 0 10px var(--primary);
+  }
+}
+
+.animate-glow-border {
+  animation: glowBorder 2s ease-in-out infinite;
+}
+
+/* Orbit animation for crypto icons */
+@keyframes orbit {
+  0% {
+    transform: rotate(0deg) translateX(100px) rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg) translateX(100px) rotate(-360deg);
+  }
+}
+
+.animate-orbit {
+  animation: orbit 20s linear infinite;
+}
+
+/* Sparkle animation */
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-sparkle {
+  animation: sparkle 2s ease-in-out infinite;
 }

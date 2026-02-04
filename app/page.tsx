@@ -6,63 +6,205 @@ import ExchangeForm from '@/components/exchange/ExchangeForm';
 import { recentOrders, reviews, exchangeRoutes } from '@/lib/mock/data';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { FadeIn, ScaleIn, StaggeredList, GlowCard, AnimatedCounter } from '@/components/ui/Animations';
+import { useScrollAnimation } from '@/hooks/useAnimations';
 
-// Animated counter component
-function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?: string }) {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    const duration = 2000;
-    const steps = 60;
-    const increment = value / steps;
-    let current = 0;
-
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= value) {
-        setCount(value);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(current));
-      }
-    }, duration / steps);
-
-    return () => clearInterval(timer);
-  }, [value]);
+// Animated Crypto Icons - positioned around the exchange form only
+function CryptoIconsAnimation() {
+  const cryptoIcons = [
+    { symbol: 'BTC', color: '#F7931A', size: 36, x: -6, y: 8, delay: 0.2 },
+    { symbol: 'ETH', color: '#627EEA', size: 32, x: 95, y: 12, delay: 0.4 },
+    { symbol: 'USDT', color: '#26A17B', size: 28, x: 98, y: 55, delay: 0.6 },
+    { symbol: 'BNB', color: '#F0B90B', size: 30, x: -4, y: 65, delay: 0.3 },
+    { symbol: 'SOL', color: '#9945FF', size: 26, x: 92, y: 88, delay: 0.5 },
+  ];
 
   return (
-    <span>
-      {count.toLocaleString()}
-      {suffix}
-    </span>
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {cryptoIcons.map((crypto, index) => (
+        <div
+          key={crypto.symbol}
+          className="absolute animate-float-crypto hidden lg:block"
+          style={{
+            left: `${crypto.x}%`,
+            top: `${crypto.y}%`,
+            animationDelay: `${crypto.delay}s`,
+            animationDuration: `${4 + index * 0.3}s`,
+          }}
+        >
+          <div
+            className="rounded-full flex items-center justify-center backdrop-blur-sm border border-white/10"
+            style={{
+              width: crypto.size,
+              height: crypto.size,
+              background: `linear-gradient(135deg, ${crypto.color}30, ${crypto.color}10)`,
+              boxShadow: `0 0 20px ${crypto.color}20`,
+            }}
+          >
+            <span
+              className="font-bold text-[10px]"
+              style={{ color: crypto.color }}
+            >
+              {crypto.symbol}
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
-// Stats bar component
+// Animated Hero Text Component
+function AnimatedHeroText() {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="relative z-10">
+      {/* Dive into - small text */}
+      <div
+        className={cn(
+          "flex items-center gap-3 mb-5 transition-all duration-700",
+          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+        )}
+      >
+        <span className="w-10 h-[2px] bg-gradient-to-r from-[#f0b90b] to-transparent" />
+        <span className="text-[#f0b90b] text-sm font-semibold tracking-[0.2em] uppercase">
+          Dive into
+        </span>
+      </div>
+
+      {/* Main headline - clean three-line layout */}
+      <h1 className="mb-6">
+        <span
+          className={cn(
+            "block text-4xl md:text-5xl lg:text-[3.5rem] font-bold text-white transition-all duration-700 leading-[1.1]",
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+          )}
+          style={{ transitionDelay: '0.15s' }}
+        >
+          NEW ERA OF
+        </span>
+        <span
+          className={cn(
+            "block text-4xl md:text-5xl lg:text-[3.5rem] font-bold text-white transition-all duration-700 leading-[1.1]",
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+          )}
+          style={{ transitionDelay: '0.3s' }}
+        >
+          CRYPTOCURRENCY
+        </span>
+        <span
+          className={cn(
+            "block text-4xl md:text-5xl lg:text-[3.5rem] font-bold transition-all duration-700 leading-[1.1]",
+            "bg-gradient-to-r from-[#f0b90b] via-[#fcd435] to-[#f0b90b] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient",
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+          )}
+          style={{ transitionDelay: '0.45s' }}
+        >
+          EXCHANGE
+        </span>
+      </h1>
+
+      {/* Subtitle */}
+      <p
+        className={cn(
+          "text-[#b7bdc6] text-base md:text-lg max-w-lg leading-relaxed mb-8 transition-all duration-700",
+          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+        )}
+        style={{ transitionDelay: '0.6s' }}
+      >
+        Swap Bitcoin, Ethereum, USDT and 50+ cryptocurrencies in seconds.
+        <span className="text-white font-medium"> No registration. No limits.</span>
+      </p>
+
+      {/* CTA Buttons */}
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-4 mb-10 transition-all duration-700",
+          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+        )}
+        style={{ transitionDelay: '0.75s' }}
+      >
+        <button
+          onClick={() => document.getElementById('exchange-form')?.scrollIntoView({ behavior: 'smooth' })}
+          className="group relative px-6 py-3 bg-gradient-to-r from-[#f0b90b] to-[#d9a60a] text-black font-bold rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:shadow-[#f0b90b]/30 hover:scale-[1.02]"
+        >
+          <span className="relative z-10 flex items-center gap-2">
+            Start Exchange
+            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+          </span>
+          <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+        </button>
+
+        <Link
+          href="/faq"
+          className="px-6 py-3 border border-[#2b3139] text-white font-medium rounded-xl hover:border-[#f0b90b]/50 hover:bg-[#f0b90b]/5 transition-all duration-300"
+        >
+          Learn More
+        </Link>
+      </div>
+
+      {/* Stats row */}
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-6 md:gap-8 pt-6 border-t border-[#2b3139]/50 transition-all duration-700",
+          isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+        )}
+        style={{ transitionDelay: '0.9s' }}
+      >
+        {[
+          { value: '156K+', label: 'Exchanges' },
+          { value: '45K+', label: 'Users' },
+          { value: '99.9%', label: 'Uptime' },
+        ].map((stat) => (
+          <div key={stat.label}>
+            <div className="text-xl md:text-2xl font-bold text-white">{stat.value}</div>
+            <div className="text-[#848e9c] text-sm">{stat.label}</div>
+          </div>
+        ))}
+
+        <div className="flex items-center gap-2">
+          <div className="flex items-center">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} size={14} className="text-[#f0b90b] fill-[#f0b90b]" />
+            ))}
+          </div>
+          <span className="text-[#848e9c] text-sm">4.9/5</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Stats bar component with scroll animations
 function StatsBar() {
   const stats = [
     { label: 'Total Exchanges', value: 156000, suffix: '+', icon: TrendingUp },
     { label: 'Active Users', value: 45000, suffix: '+', icon: Users },
     { label: 'Countries', value: 120, suffix: '+', icon: Globe },
-    { label: 'Uptime', value: 99.9, suffix: '%', icon: Shield },
+    { label: 'Uptime', value: 99, suffix: '.9%', icon: Shield },
   ];
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-      {stats.map((stat) => (
-        <div
-          key={stat.label}
-          className="group relative bg-[#1e2329]/80 backdrop-blur-sm rounded-2xl p-4 md:p-5 border border-[#2b3139] hover:border-[#f0b90b]/30 transition-all duration-300"
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-[#f0b90b]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-          <div className="relative">
-            <stat.icon className="text-[#f0b90b] mb-2" size={20} />
-            <div className="text-2xl md:text-3xl font-bold text-white">
-              <AnimatedNumber value={stat.value} suffix={stat.suffix} />
+      {stats.map((stat, index) => (
+        <FadeIn key={stat.label} direction="up" delay={index * 100}>
+          <div className="group relative bg-[#1e2329]/80 backdrop-blur-sm rounded-2xl p-4 md:p-5 border border-[#2b3139] hover:border-[#f0b90b]/30 transition-all duration-300 hover:-translate-y-1 card-3d">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#f0b90b]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
+            <div className="relative">
+              <stat.icon className="text-[#f0b90b] mb-2 group-hover:animate-bounce-subtle" size={20} />
+              <div className="text-2xl md:text-3xl font-bold text-white">
+                <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+              </div>
+              <div className="text-[#848e9c] text-sm">{stat.label}</div>
             </div>
-            <div className="text-[#848e9c] text-sm">{stat.label}</div>
           </div>
-        </div>
+        </FadeIn>
       ))}
     </div>
   );
@@ -214,23 +356,26 @@ function Features() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {features.map((feature, index) => (
-        <div
-          key={feature.title}
-          className={cn(
-            'group relative bg-[#1e2329] rounded-2xl p-6 border border-[#2b3139] overflow-hidden transition-all duration-300 hover:border-[#f0b90b]/30 hover:-translate-y-1'
-          )}
-        >
-          {/* Background gradient */}
-          <div className={cn('absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity', feature.color)} />
+        <FadeIn key={feature.title} direction="up" delay={index * 100} duration={600}>
+          <GlowCard className="h-full">
+            <div
+              className={cn(
+                'group relative h-full rounded-2xl p-6 overflow-hidden transition-all duration-300'
+              )}
+            >
+              {/* Background gradient */}
+              <div className={cn('absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500', feature.color)} />
 
-          <div className="relative">
-            <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center mb-4', feature.iconBg)}>
-              <feature.icon className={feature.iconColor} size={24} />
+              <div className="relative">
+                <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3', feature.iconBg)}>
+                  <feature.icon className={cn(feature.iconColor, 'transition-all duration-300')} size={24} />
+                </div>
+                <h3 className="text-white font-semibold mb-2 group-hover:text-[#f0b90b] transition-colors">{feature.title}</h3>
+                <p className="text-[#848e9c] text-sm leading-relaxed">{feature.description}</p>
+              </div>
             </div>
-            <h3 className="text-white font-semibold mb-2 group-hover:text-[#f0b90b] transition-colors">{feature.title}</h3>
-            <p className="text-[#848e9c] text-sm leading-relaxed">{feature.description}</p>
-          </div>
-        </div>
+          </GlowCard>
+        </FadeIn>
       ))}
     </div>
   );
@@ -296,124 +441,55 @@ function ReviewsPreview() {
   );
 }
 
-// Floating particles background - using fixed positions to avoid hydration mismatch
-const particlePositions = [
-  { left: 5, top: 10, delay: 0.5, duration: 3 },
-  { left: 15, top: 85, delay: 1.2, duration: 4 },
-  { left: 25, top: 30, delay: 0.8, duration: 3.5 },
-  { left: 35, top: 60, delay: 2.1, duration: 2.5 },
-  { left: 45, top: 15, delay: 1.5, duration: 4.5 },
-  { left: 55, top: 75, delay: 0.3, duration: 3.2 },
-  { left: 65, top: 45, delay: 2.5, duration: 2.8 },
-  { left: 75, top: 20, delay: 1.8, duration: 3.8 },
-  { left: 85, top: 90, delay: 0.9, duration: 4.2 },
-  { left: 95, top: 50, delay: 2.2, duration: 3 },
-  { left: 10, top: 40, delay: 1.1, duration: 3.6 },
-  { left: 20, top: 70, delay: 2.8, duration: 2.9 },
-  { left: 30, top: 5, delay: 0.6, duration: 4.1 },
-  { left: 40, top: 95, delay: 1.9, duration: 3.3 },
-  { left: 50, top: 25, delay: 2.4, duration: 2.7 },
-  { left: 60, top: 55, delay: 0.7, duration: 4.4 },
-  { left: 70, top: 80, delay: 1.3, duration: 3.1 },
-  { left: 80, top: 35, delay: 2.6, duration: 2.6 },
-  { left: 90, top: 65, delay: 1.0, duration: 3.9 },
-  { left: 98, top: 8, delay: 2.0, duration: 3.4 },
-];
-
-function ParticlesBackground() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {particlePositions.map((particle, i) => (
-        <div
-          key={i}
-          className="absolute w-1 h-1 bg-[#f0b90b]/30 rounded-full animate-pulse"
-          style={{
-            left: `${particle.left}%`,
-            top: `${particle.top}%`,
-            animationDelay: `${particle.delay}s`,
-            animationDuration: `${particle.duration}s`,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#0b0e11]">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Background effects */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#f0b90b]/10 via-transparent to-[#0ecb81]/5" />
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#f0b90b]/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#0ecb81]/5 rounded-full blur-3xl" />
-        <ParticlesBackground />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#f0b90b]/3 via-transparent to-[#0ecb81]/3" />
+        <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-[#f0b90b]/5 rounded-full blur-[80px] animate-pulse-scale" />
+        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-[#0ecb81]/5 rounded-full blur-[60px] animate-pulse-scale" style={{ animationDelay: '1s' }} />
 
-        <div className="relative max-w-7xl mx-auto px-4 py-12 lg:py-16">
-          <div className="grid lg:grid-cols-2 gap-12 items-start">
-            {/* Left - Text */}
-            <div className="lg:pt-8">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#f0b90b]/10 rounded-full border border-[#f0b90b]/20 mb-6">
-                <span className="w-2 h-2 bg-[#0ecb81] rounded-full animate-pulse" />
-                <span className="text-[#f0b90b] text-sm font-medium">Trusted by 45,000+ users worldwide</span>
-              </div>
+        {/* Grid pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.015]"
+          style={{
+            backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`,
+            backgroundSize: '50px 50px',
+          }}
+        />
 
-              <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-                Exchange Crypto
-                <br />
-                <span className="bg-gradient-to-r from-[#f0b90b] to-[#d9a60a] bg-clip-text text-transparent">
-                  Instantly & Securely
-                </span>
-              </h1>
-
-              <p className="text-[#b7bdc6] text-lg mb-8 max-w-lg leading-relaxed">
-                Swap Bitcoin, Ethereum, USDT, and 50+ cryptocurrencies in seconds.
-                No registration. No limits. Best rates guaranteed.
-              </p>
-
-              {/* Trust indicators */}
-              <div className="flex flex-wrap items-center gap-6 text-sm">
-                <div className="flex items-center gap-2 text-[#b7bdc6]">
-                  <CheckCircle className="text-[#0ecb81]" size={18} />
-                  <span>No KYC Required</span>
-                </div>
-                <div className="flex items-center gap-2 text-[#b7bdc6]">
-                  <CheckCircle className="text-[#0ecb81]" size={18} />
-                  <span>5 Min Avg. Time</span>
-                </div>
-                <div className="flex items-center gap-2 text-[#b7bdc6]">
-                  <CheckCircle className="text-[#0ecb81]" size={18} />
-                  <span>24/7 Support</span>
-                </div>
-              </div>
-
-              {/* Rating */}
-              <div className="flex items-center gap-4 mt-8 pt-8 border-t border-[#2b3139]">
-                <div className="flex items-center gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={18} className="text-[#f0b90b] fill-[#f0b90b]" />
-                  ))}
-                </div>
-                <div>
-                  <span className="text-white font-semibold">4.9</span>
-                  <span className="text-[#848e9c]"> / 5 from </span>
-                  <span className="text-white font-semibold">2,500+ reviews</span>
-                </div>
-              </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-10 items-center">
+            {/* Left - Animated Text */}
+            <div>
+              <AnimatedHeroText />
             </div>
 
             {/* Right - Exchange Form */}
-            <div className="lg:pl-4">
-              <div className="relative">
+            <div
+              id="exchange-form"
+              className="relative animate-scale-fade [animation-delay:0.5s]"
+            >
+              {/* Crypto icons around the form */}
+              <CryptoIconsAnimation />
+
+              <div className="relative group">
                 {/* Glow effect behind form */}
-                <div className="absolute -inset-4 bg-gradient-to-r from-[#f0b90b]/20 to-[#0ecb81]/20 rounded-3xl blur-2xl opacity-50" />
-                <div className="relative bg-[#1e2329] rounded-2xl p-1 border border-[#2b3139]">
+                <div className="absolute -inset-3 bg-gradient-to-r from-[#f0b90b]/15 via-[#f0b90b]/5 to-[#0ecb81]/15 rounded-2xl blur-xl opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+                <div className="relative bg-[#1e2329] backdrop-blur-xl rounded-2xl border border-[#2b3139] hover:border-[#f0b90b]/20 transition-colors duration-500 shadow-2xl shadow-black/30">
                   <ExchangeForm />
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="flex justify-center pb-4">
+          <div className="w-4 h-7 border border-[#2b3139] rounded-full flex justify-center pt-1 opacity-40 hover:opacity-80 transition-opacity cursor-pointer" onClick={() => window.scrollBy({ top: 300, behavior: 'smooth' })}>
+            <div className="w-0.5 h-1 bg-[#f0b90b] rounded-full animate-scroll-indicator" />
           </div>
         </div>
       </div>
@@ -425,26 +501,32 @@ export default function Home() {
 
       {/* Features */}
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="text-center mb-10">
+        <FadeIn direction="up" className="text-center mb-10">
           <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3">Why Choose AevonX?</h2>
           <p className="text-[#848e9c] max-w-2xl mx-auto">
             We've built the fastest, most secure crypto exchange platform. Here's what makes us different.
           </p>
-        </div>
+        </FadeIn>
         <Features />
       </div>
 
       {/* Recent & Popular */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid lg:grid-cols-2 gap-6">
-          <RecentExchanges />
-          <PopularPairs />
+          <FadeIn direction="left">
+            <RecentExchanges />
+          </FadeIn>
+          <FadeIn direction="right" delay={100}>
+            <PopularPairs />
+          </FadeIn>
         </div>
       </div>
 
       {/* Reviews */}
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <ReviewsPreview />
+        <FadeIn direction="up">
+          <ReviewsPreview />
+        </FadeIn>
       </div>
 
       {/* CTA Section */}

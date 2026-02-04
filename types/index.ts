@@ -905,3 +905,14 @@ export interface FavoriteRate {
 export interface FavoriteRatesResponse {
   rates: FavoriteRate[];
 }
+
+// File upload response
+export interface FileUploadResponse {
+  _id: string;
+  url: string;
+  type: string;
+  filename?: string;
+  size?: number;
+  mimetype?: string;
+  createdAt?: string;
+}
