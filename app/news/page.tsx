@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Calendar, MessageCircle, ArrowRight, Loader2 } from 'lucide-react';
 import { publicApi } from '@/lib/api';
+import { transformNewsArticles } from '@/lib/api/transformers';
 import { newsArticles as fallbackArticles } from '@/lib/mock/data';
-import { NewsArticle } from '@/types';
+import { NewsArticle, ApiNewsArticle } from '@/types';
 import Link from 'next/link';
 
 export default function NewsPage() {
@@ -17,7 +18,9 @@ export default function NewsPage() {
       try {
         const response = await publicApi.getNews();
         if (response.success && response.data) {
-          setArticles(response.data);
+          const apiArticles = response.data as unknown as ApiNewsArticle[];
+          const transformedArticles = transformNewsArticles(apiArticles);
+          setArticles(transformedArticles);
         }
       } catch (err) {
         console.error('Failed to fetch news:', err);

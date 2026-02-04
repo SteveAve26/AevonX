@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Star, CheckCircle, Send, Loader2 } from 'lucide-react';
 import { publicApi } from '@/lib/api';
+import { transformReviews } from '@/lib/api/transformers';
 import { reviews as fallbackReviews } from '@/lib/mock/data';
-import { Review } from '@/types';
+import { Review, ApiReview } from '@/types';
 import { cn } from '@/lib/utils';
 
 export default function ReviewsPage() {
@@ -22,7 +23,9 @@ export default function ReviewsPage() {
       try {
         const response = await publicApi.getReviews();
         if (response.success && response.data) {
-          setReviews(response.data);
+          const apiReviews = response.data as unknown as ApiReview[];
+          const transformedReviews = transformReviews(apiReviews);
+          setReviews(transformedReviews);
         }
       } catch (err) {
         console.error('Failed to fetch reviews:', err);

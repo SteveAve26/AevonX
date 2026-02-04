@@ -9,6 +9,21 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+// Helper to extract nested data from API response
+function extractData<T>(responseData: Record<string, unknown>): T {
+  // API returns { success, data: { routes/reviews/news/etc: [...] } }
+  // We need to extract the actual array/object from the nested structure
+  if (responseData && typeof responseData === 'object') {
+    const keys = Object.keys(responseData);
+    // If there's only one key (besides metadata), extract that value
+    const dataKeys = keys.filter(k => !['cache', 'latency_ms', 'requestId'].includes(k));
+    if (dataKeys.length === 1) {
+      return responseData[dataKeys[0]] as T;
+    }
+  }
+  return responseData as T;
+}
+
 class ApiClient {
   private baseUrl: string;
   private token: string | null = null;
@@ -19,10 +34,12 @@ class ApiClient {
 
   setToken(token: string | null) {
     this.token = token;
-    if (token) {
-      localStorage.setItem('auth_token', token);
-    } else {
-      localStorage.removeItem('auth_token');
+    if (typeof window !== 'undefined') {
+      if (token) {
+        localStorage.setItem('auth_token', token);
+      } else {
+        localStorage.removeItem('auth_token');
+      }
     }
   }
 
@@ -56,18 +73,21 @@ class ApiClient {
         headers,
       });
 
-      const data = await response.json();
+      const json = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || json.success === false) {
         return {
           success: false,
-          error: data.message || data.error || 'Request failed',
+          error: json.message || json.error || 'Request failed',
         };
       }
 
+      // Extract nested data from API response
+      const extractedData = json.data ? extractData<T>(json.data) : json;
+
       return {
         success: true,
-        data,
+        data: extractedData,
       };
     } catch (error) {
       return {

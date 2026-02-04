@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, Search, Loader2 } from 'lucide-react';
 import { publicApi } from '@/lib/api';
+import { transformFaqGroups, transformFaqItems } from '@/lib/api/transformers';
 import { faqGroups as fallbackGroups, faqItems as fallbackItems } from '@/lib/mock/data';
-import { FAQGroup, FAQItem } from '@/types';
+import { FAQGroup, FAQItem, ApiFaqGroup, ApiFaqItem } from '@/types';
 import { cn } from '@/lib/utils';
 
 export default function FAQPage() {
@@ -26,14 +27,18 @@ export default function FAQPage() {
         ]);
 
         if (groupsRes.success && groupsRes.data) {
-          setGroups(groupsRes.data);
-          if (groupsRes.data.length > 0 && !activeGroup) {
-            setActiveGroup(groupsRes.data[0].id);
+          const apiGroups = groupsRes.data as unknown as ApiFaqGroup[];
+          const transformedGroups = transformFaqGroups(apiGroups, 'en');
+          setGroups(transformedGroups);
+          if (transformedGroups.length > 0 && !activeGroup) {
+            setActiveGroup(transformedGroups[0].id);
           }
         }
 
         if (itemsRes.success && itemsRes.data) {
-          setItems(itemsRes.data);
+          const apiItems = itemsRes.data as unknown as ApiFaqItem[];
+          const transformedItems = transformFaqItems(apiItems);
+          setItems(transformedItems);
         }
       } catch (err) {
         console.error('Failed to fetch FAQ:', err);

@@ -45,6 +45,58 @@ export interface ExchangeRoute {
   isActive: boolean;
 }
 
+// ============ API Response Types (raw from backend) ============
+export interface ApiCurrency {
+  name: string;
+  symbol: string;
+  xml: string;
+  decimal: number;
+  min: string;
+  max: string;
+  verification?: boolean;
+  image?: {
+    files: { type: string; url: string }[];
+  };
+}
+
+export interface ApiRoute {
+  from: ApiCurrency;
+  to: ApiCurrency;
+  in: number;
+  out: number;
+  amount: number;
+  minamount?: number;
+  maxamount?: number;
+}
+
+export interface ApiReview {
+  name: string;
+  email?: string;
+  message: string;
+  createdAt: string;
+}
+
+export interface ApiFaqGroup {
+  groupName: string;
+  lang: string;
+  count: number;
+}
+
+export interface ApiFaqItem {
+  _id: string;
+  question: string;
+  answer: string;
+  groupName: string;
+}
+
+export interface ApiNewsArticle {
+  _id: string;
+  title: string;
+  description: string;
+  content?: string;
+  createdAt: string;
+}
+
 export interface ExchangeOrder {
   id: string;
   status: 'pending' | 'waiting' | 'confirming' | 'exchanging' | 'completed' | 'failed' | 'cancelled';

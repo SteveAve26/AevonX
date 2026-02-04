@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { ArrowDownUp, ChevronDown, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { Currency, ExchangeRoute } from '@/types';
+import { Currency, ExchangeRoute, ApiRoute } from '@/types';
 import { exchangerApi } from '@/lib/api/exchanger';
+import { transformRoutes } from '@/lib/api/transformers';
 import { currencies as fallbackCurrencies, exchangeRoutes as fallbackRoutes } from '@/lib/mock/data';
 import { cn } from '@/lib/utils';
 
@@ -124,10 +125,14 @@ export default function ExchangeForm() {
       try {
         const response = await exchangerApi.getRoutes();
         if (response.success && response.data) {
-          setRoutes(response.data);
+          // Transform API routes to our internal format
+          const apiRoutes = response.data as unknown as ApiRoute[];
+          const transformedRoutes = transformRoutes(apiRoutes);
+          setRoutes(transformedRoutes);
+
           // Extract unique currencies from routes
           const currencyMap = new Map<string, Currency>();
-          response.data.forEach((route: ExchangeRoute) => {
+          transformedRoutes.forEach((route: ExchangeRoute) => {
             currencyMap.set(route.fromCurrency.id, route.fromCurrency);
             currencyMap.set(route.toCurrency.id, route.toCurrency);
           });
@@ -135,9 +140,9 @@ export default function ExchangeForm() {
           setCurrencies(uniqueCurrencies);
 
           // Set default currencies
-          if (response.data.length > 0) {
-            setFromCurrency(response.data[0].fromCurrency);
-            setToCurrency(response.data[0].toCurrency);
+          if (transformedRoutes.length > 0) {
+            setFromCurrency(transformedRoutes[0].fromCurrency);
+            setToCurrency(transformedRoutes[0].toCurrency);
           }
         }
       } catch (err) {
