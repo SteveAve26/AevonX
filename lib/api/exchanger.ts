@@ -23,7 +23,7 @@ export const exchangerApi = {
   // @param fromCurrencyIds - Array of source currency IDs (optional)
   // @param toCurrencyIds - Array of destination currency IDs (optional)
   getRoutesV2: (params?: { fromCurrencyIds?: string[]; toCurrencyIds?: string[] }) =>
-    apiClient.post<RoutesV2Response>('/public/exchanger/route-v2/get', params || {}),
+    apiClient.get<RoutesV2Response>('/public/exchanger/route-v2/get', params as Record<string, string>),
 
   // Get one route by ID
   // @param id - Route ObjectID
