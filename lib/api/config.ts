@@ -11,9 +11,13 @@ export interface ApiResponse<T> {
 
 // Helper to extract nested data from API response
 function extractData<T>(responseData: Record<string, unknown>): T {
-  // API returns { success, data: { routes/reviews/news/etc: [...] } }
-  // We need to extract the actual array/object from the nested structure
+  // Check if this is an error response
   if (responseData && typeof responseData === 'object') {
+    if ('apiError' in responseData || 'errorType' in responseData || 'errorCode' in responseData) {
+      // This is an error object, don't extract
+      throw new Error((responseData.message as string) || 'API Error');
+    }
+
     const keys = Object.keys(responseData);
     // If there's only one key (besides metadata), extract that value
     const dataKeys = keys.filter(k => !['cache', 'latency_ms', 'requestId'].includes(k));

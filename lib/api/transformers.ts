@@ -45,9 +45,17 @@ export function transformRoute(apiRoute: ApiRoute, index: number): ExchangeRoute
   };
 }
 
-// Transform array of API routes
+// Currencies to exclude
+const EXCLUDED_CURRENCIES = ['UAH', 'KZT'];
+
+// Transform array of API routes (filtering out excluded currencies)
 export function transformRoutes(apiRoutes: ApiRoute[]): ExchangeRoute[] {
-  return apiRoutes.map((route, index) => transformRoute(route, index));
+  return apiRoutes
+    .filter(route =>
+      !EXCLUDED_CURRENCIES.includes(route.from.symbol) &&
+      !EXCLUDED_CURRENCIES.includes(route.to.symbol)
+    )
+    .map((route, index) => transformRoute(route, index));
 }
 
 // Transform API review to internal Review type
