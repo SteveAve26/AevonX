@@ -84,7 +84,7 @@ export default function Header() {
                     {user?.email?.charAt(0).toUpperCase() || 'U'}
                   </div>
                   <span className="hidden sm:inline text-sm max-w-[100px] truncate">
-                    {user?.username || user?.email?.split('@')[0] || 'Account'}
+                    {user?.first_name || user?.email?.split('@')[0] || 'Account'}
                   </span>
                   <ChevronDown size={14} className={`transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
                 </button>

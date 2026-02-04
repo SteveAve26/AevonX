@@ -25,7 +25,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authApi.getSession();
       if (response.success && response.data) {
-        setUser(response.data.user);
+        // getSession returns User directly
+        setUser(response.data);
       } else {
         setUser(null);
         apiClient.setToken(null);
@@ -48,8 +49,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     const response = await authApi.login({ email, password });
     if (response.success && response.data) {
-      apiClient.setToken(response.data.token);
-      setUser(response.data.user);
+      // If tokenAuth was used, save the token
+      if (response.data.token) {
+        apiClient.setToken(response.data.token);
+      }
+      // Convert LoginResponse to User type
+      const userData: User = {
+        _id: response.data._id,
+        uid: 0, // Not returned in login response
+        email: response.data.email,
+        first_name: response.data.first_name,
+        last_name: response.data.last_name,
+        phone: undefined,
+        accountType: 'personal',
+        affiliate: {
+          type: response.data.affiliate.type,
+          rate: response.data.affiliate.rate,
+          discount: 0,
+          link: response.data.affiliate.link,
+          rateKey: 'public',
+          rateExportFormatType: 'default',
+          minReward: 0,
+          totalReceived: response.data.affiliate.totalReceived,
+          balance: response.data.affiliate.balance,
+        },
+        secure2fa: response.data.secure2fa,
+        verificationPhone: response.data.verificationPhone,
+        verificationPerson: response.data.verificationPerson,
+        createdAt: '',
+        updatedAt: '',
+        notifyChangePass: response.data.notifyChangePass,
+        notifyLogin: response.data.notifyLogin,
+      };
+      setUser(userData);
       return { success: true };
     }
     return { success: false, error: response.error || 'Login failed' };

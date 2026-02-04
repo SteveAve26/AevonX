@@ -1,48 +1,95 @@
 import apiClient from './config';
-import { AffiliateInfo, AffiliateOrder, AffiliateChartData, ExchangeRoute } from '@/types';
+import {
+  AffiliateInfo,
+  AffiliateTodayStats,
+  AffiliateOrdersResponse,
+  AffiliateChartData,
+  PartnerRoute,
+  PartnerVisitorStats,
+  CreatePartnerWithdrawalRequest,
+  CreatePartnerWithdrawalResponse,
+  PartnerWithdrawalOrder,
+  PartnerWithdrawalHistoryResponse,
+} from '@/types';
 
 export const affiliateApi = {
-  // Get basic affiliate info
+  // ========== Affiliate Stats ==========
+
+  // Get basic affiliate info (commission rate, balance, stats)
   getInfo: () =>
-    apiClient.get<AffiliateInfo>('/user/affiliate/basic/get'),
+    apiClient.get<{ affiliate: AffiliateInfo }>('/user/affiliate/basic/get'),
 
   // Get today's affiliate stats
   getTodayStats: () =>
-    apiClient.get<AffiliateInfo>('/user/affiliate/today/get'),
+    apiClient.get<{ affiliate: AffiliateTodayStats }>('/user/affiliate/today/get'),
 
-  // Get chart data
-  getChartData: (params?: { period?: string }) =>
-    apiClient.get<AffiliateChartData[]>('/user/affiliate/chart', params as Record<string, string>),
+  // Get chart data (last 3 months of partner statistics)
+  getChartData: () =>
+    apiClient.get<{ statistics: AffiliateChartData[] }>('/user/affiliate/chart'),
 
   // Get partner orders history
-  getOrders: (params?: { page?: number; limit?: number }) =>
-    apiClient.get<{ orders: AffiliateOrder[]; total: number }>('/user/affiliate/orders', params as Record<string, string>),
+  // @param page - Page number (required)
+  // @param limit - Items per page (required)
+  // @param allOrders - If true, show all orders; if false, only "done" orders
+  getOrders: (params: { page: number; limit: number; allOrders?: boolean }) =>
+    apiClient.get<AffiliateOrdersResponse>('/user/affiliate/orders', {
+      page: String(params.page),
+      limit: String(params.limit),
+      ...(params.allOrders !== undefined && { allOrders: String(params.allOrders) }),
+    }),
 
-  // ========== Partner Withdrawal ==========
+  // ========== Partner Withdrawal Routes ==========
 
-  // Get withdrawal routes
+  // Get list of withdrawal routes for affiliate balance
   getWithdrawalRoutes: () =>
-    apiClient.get<ExchangeRoute[]>('/user/exchanger/partner-route/get'),
+    apiClient.get<{ routes: PartnerRoute[] }>('/user/exchanger/partner-route/get'),
 
-  // Get one withdrawal route
+  // Get one withdrawal route details
   getWithdrawalRoute: (id: string) =>
-    apiClient.get<ExchangeRoute>('/user/exchanger/partner-route/get/one', { id }),
+    apiClient.get<{ route: PartnerRoute }>('/user/exchanger/partner-route/get/one', { id }),
 
-  // Get withdrawal statistics
-  getWithdrawalStats: () =>
-    apiClient.get<{ total: number; pending: number }>('/user/exchanger/partner-route/statistic'),
+  // Get visitor statistics for partner link
+  // @param startAt - Start date (optional, defaults to 1 month ago)
+  // @param endAt - End date (optional, defaults to now)
+  // Note: Maximum period is 92 days
+  getVisitorStats: (params?: { startAt?: string; endAt?: string }) =>
+    apiClient.get<PartnerVisitorStats>('/user/exchanger/partner-route/statistic', params as Record<string, string>),
 
-  // Create withdrawal order
-  createWithdrawal: (data: { routeId: string; amount: number; address: string }) =>
-    apiClient.post<{ orderId: string }>('/user/exchanger/order/partner/create', data),
+  // ========== Partner Link ==========
 
-  // Get withdrawal order
-  getWithdrawalOrder: (id: string) =>
-    apiClient.get<AffiliateOrder>('/user/exchanger/order/partner/get', { id }),
+  // Edit partner/affiliate link (max 30 chars, must be unique)
+  editPartnerLink: (affiliateLink: string) =>
+    apiClient.put<{ ok: number }>('/user/profile/edit/partner-link', { affiliateLink }),
 
-  // Get withdrawal history
-  getWithdrawalHistory: (params?: { page?: number; limit?: number }) =>
-    apiClient.get<{ orders: AffiliateOrder[]; total: number }>('/user/exchanger/order/partner/history', params as Record<string, string>),
+  // ========== Partner Withdrawal Orders ==========
+
+  // Create partner withdrawal order
+  // Note: 60 second cooldown between orders, must accept agreement
+  // @param routeId - Route ObjectID
+  // @param amount - Amount in USD to withdraw
+  // @param toValues - Destination fields [{key: fieldId, value: 'address'}]
+  // @param routeValues - Route fields [{key: fieldId, value: 'value'}]
+  // @param agreement - Must be true
+  createWithdrawal: (data: CreatePartnerWithdrawalRequest) =>
+    apiClient.post<CreatePartnerWithdrawalResponse>('/user/exchanger/order/partner/create', data),
+
+  // Get partner withdrawal order details
+  // @param orderUID - Order UID (integer)
+  // @param orderSecret - Order secret string
+  getWithdrawalOrder: (orderUID: number, orderSecret: string) =>
+    apiClient.get<{ order: PartnerWithdrawalOrder }>('/user/exchanger/order/partner/get', {
+      orderUID: String(orderUID),
+      orderSecret,
+    }),
+
+  // Get partner withdrawal order history
+  // @param page - Page number (required)
+  // @param limit - Items per page (required)
+  getWithdrawalHistory: (params: { page: number; limit: number }) =>
+    apiClient.get<PartnerWithdrawalHistoryResponse>('/user/exchanger/order/partner/history', {
+      page: String(params.page),
+      limit: String(params.limit),
+    }),
 };
 
 export default affiliateApi;

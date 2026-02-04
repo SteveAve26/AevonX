@@ -1,27 +1,127 @@
 // ============ Auth Types ============
 export interface User {
-  id: string;
+  _id: string;
+  uid: number;
   email: string;
-  username?: string;
-  partnerLink?: string;
-  isVerified: boolean;
-  otpEnabled: boolean;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  accountType: 'personal' | 'business';
+  companyName?: string;
+  dob?: string;
+  address_line1?: string;
+  address_line2?: string;
+  address_country?: string;
+  address_city?: string;
+  address_zip?: string;
+  affiliate: {
+    type: string;
+    rate: number;
+    discount: number;
+    link: string;
+    rateKey: string;
+    rateExportFormatType: string;
+    minReward: number;
+    totalReceived: { usd: number };
+    balance: { usd: number };
+  };
+  secure2fa: { active: boolean; type?: string };
+  verificationPhone?: { status: string };
+  verificationPerson?: { status: string };
   createdAt: string;
+  updatedAt: string;
+  notifyChangePass: boolean;
+  notifyLogin: boolean;
+  crispEmailHash?: string;
 }
 
 export interface AuthSession {
-  token: string;
-  user: User;
+  token?: string;
+  tokenSecret?: string;
+  user?: User;
 }
 
 export interface RegisterRequest {
+  email: string;                    // Required, max 200 chars
+  password: string;                 // Required, max 100 chars, min 5
+  partner_code?: string;            // Optional referral code, max 150 chars
+  first_name?: string;              // Optional, max 100 chars
+  last_name?: string;               // Optional, max 100 chars
+  phone?: string;                   // Optional, max 30 chars
+  return_to?: string;               // Optional redirect URL after confirm, max 250
+  accountType?: 'personal' | 'business';  // Optional, defaults to 'personal'
+  companyName?: string;             // Optional, max 400 chars (for business accounts)
+}
+
+export interface RegisterResponse {
+  _id: string;
   email: string;
-  password: string;
+  first_name: string;
+  last_name: string;
+  active: boolean;
+  apiKey?: { key: string; secret: string };  // Only for internal registration
+  verificationEmailExpiresAt?: string;
 }
 
 export interface LoginRequest {
+  email: string;                    // Required, max 200 chars
+  password: string;                 // Required, max 255 chars
+  code?: number;                    // Optional 2FA code
+  tokenAuth?: boolean;              // If true, returns token instead of session
+  apiAuth?: boolean;                // If true, creates and returns API key
+}
+
+export interface LoginResponse {
+  _id: string;
   email: string;
-  password: string;
+  first_name: string;
+  last_name: string;
+  os: string;
+  osVersion: string;
+  browser: string;
+  browserVersion: string;
+  affiliate: {
+    type: string;
+    rate: number;
+    link: string;
+    totalReceived: { usd: number };
+    balance: { usd: number };
+  };
+  secure2fa: { active: boolean; type?: string };
+  partner_id?: string;
+  verificationPhone?: { status: string };
+  verificationPerson?: { status: string };
+  notifyChangePass: boolean;
+  notifyLogin: boolean;
+  token?: string;                   // If tokenAuth: true
+  tokenSecret?: string;             // If tokenAuth: true
+  apiKey?: { key: string; secret: string };  // If apiAuth: true
+}
+
+export interface TelegramLoginRequest {
+  initData: string;                 // Telegram WebApp init data, max 2000 chars
+  tokenAuth?: boolean;
+}
+
+export interface TelegramLoginResponse {
+  ok: number;
+  isNewUser: boolean;
+  userId: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  telegramId: string;
+  telegramUsername: string | null;
+  telegramPhotoUrl: string | null;
+  affiliate?: {
+    type: string;
+    rate: number;
+    link: string;
+  };
+  secure2fa: { active: boolean; type?: string };
+  partner_id?: string;
+  verificationPhone?: { status: string };
+  verificationPerson?: { status: string };
 }
 
 // ============ Exchanger Types ============
@@ -113,10 +213,28 @@ export interface ExchangeOrder {
 }
 
 export interface CreateOrderRequest {
-  routeId: string;
-  fromAmount: number;
-  toAddress: string;
-  email?: string;
+  routeId: string;                  // Route ObjectID
+  amount: number;                   // Positive = "from" amount, Negative = "to" amount
+  partner?: string;                 // Partner/referral code (max 100)
+  fromValues?: Array<{ key: string; value: string }>;   // "From" currency fields
+  toValues?: Array<{ key: string; value: string }>;     // "To" currency fields (e.g., address)
+  routeValues?: Array<{ key: string; value: string }>;  // Route-specific fields
+  lang?: string;                    // Language code (max 3)
+  agreement: boolean;               // Must be true
+  hideOutData?: boolean;            // Hide output data
+  disableEmailNotify?: boolean;     // Disable email notifications
+  skipPreview?: boolean;            // Skip preview step
+  clientCallbackUrl?: string;       // Client callback URL (max 200)
+  ipnUrl?: string;                  // IPN webhook URL (max 200)
+  ipnSecret?: string;               // IPN secret for verification (max 200)
+  additionalServices?: string[];    // Additional service IDs
+  extraData?: Record<string, unknown>; // Extra custom data
+}
+
+export interface OrderFilesRequest {
+  orderId: string;
+  fileIds?: string[];
+  status?: string;
 }
 
 // ============ Wallet Types ============
@@ -141,25 +259,192 @@ export interface WalletTransaction {
 
 // ============ Affiliate Types ============
 export interface AffiliateInfo {
-  partnerLink: string;
-  totalReferrals: number;
-  totalEarnings: number;
-  pendingEarnings: number;
-  availableBalance: number;
+  type: string;                     // Affiliate type
+  rate: number;                     // Commission rate (%)
+  discount: number;                 // Discount for referrals (%)
+  link: string;                     // Partner referral link
+  rateKey: string;                  // "public" or custom rate key
+  rateExportFormatType: string;     // "default" or custom format
+  minReward: string | number;       // Minimum reward threshold
+  ordersAmountInUSD: number;        // Total orders volume in USD
+  totalReceived: number;            // Total received earnings in USD
+  balance: number;                  // Current available balance in USD
+  waitedPartnerRewardsUSD: number;  // Pending rewards in USD
+  countPartners: number;            // Number of referred users
+  countSuccessOrders: number;       // Completed orders count
+  countAllOrders: number;           // All orders count
 }
 
 export interface AffiliateOrder {
-  id: string;
-  orderId: string;
-  commission: number;
+  uid: string;
+  rid: string;
+  utm: {
+    source: string;
+    medium: string;
+    campaign: string;
+    content: string;
+    term: string;
+    gclid: string;
+    gbraid: string;
+    fbclid: string;
+    session_id: string;
+    external_id: string;
+  };
+  outAmount: number;
   status: string;
   createdAt: string;
+  updatedAt: string;
+  partnerFee: {
+    type: string;
+    percent: number;
+    amountOut: number;
+    amountInUSD: number;
+  };
+  route: {
+    routeId: string;
+    from: {
+      name: string;
+      symbol: string;
+      xml: string;
+      decimal: number;
+      image?: { files: { type: string; url: string }[] };
+    };
+    to: {
+      name: string;
+      symbol: string;
+      xml: string;
+      decimal: number;
+      image?: { files: { type: string; url: string }[] };
+    };
+  };
+  expiresAt: string;
+}
+
+export interface AffiliateOrdersResponse {
+  orders: AffiliateOrder[];
+  count: {
+    total: number;
+    pages: number;
+    select_page: number;
+    limit: number;
+    offset: number;
+  };
 }
 
 export interface AffiliateChartData {
-  date: string;
-  earnings: number;
-  orders: number;
+  date: string;              // "YYYY-MM-DD"
+  sumAmountsUSD: number;     // Total amount in USD
+  avgAmountsUSD: number;     // Average amount in USD
+  doneOrders: number;        // Completed orders count
+  count: number;             // Total orders count
+}
+
+// Today's affiliate stats
+export interface AffiliateTodayStats {
+  totalPartners: number;
+  totalOrders: number;
+  todayExchangedInUSD: number;
+  todayPartners: number;
+  todaySuccessOrders: number;
+}
+
+// Partner withdrawal route
+export interface PartnerRoute {
+  routeId: string;
+  to: {
+    name: string;
+    symbol: string;
+    xml: string;
+    decimal: number;
+    min?: number;
+    max?: number;
+    payoutEnabled?: boolean;
+    payout?: string;
+    verification?: boolean;
+    fields?: Array<{ name: string; type: string; required: boolean }>;
+    usd?: { rate: number };
+    image?: { files: { type: string; url: string }[] };
+  };
+  fields?: Array<{ name: string; type: string; required: boolean }>;
+  rate: {
+    in: number;
+    out: number;
+    amount: number;
+    outFeeAmount: number;
+    changeFeePercent?: number;
+  };
+  isAutoPayout?: boolean;
+  orderTTL?: number;
+}
+
+// Partner visitor statistics
+export interface PartnerVisitorStats {
+  partners: Array<{ date: string; total_count: number }>;
+  date: {
+    periodInDays: number;
+    fromDate: string;
+    toDate: string;
+  };
+}
+
+// Partner withdrawal order creation request
+export interface CreatePartnerWithdrawalRequest {
+  routeId: string;              // ObjectID of the route
+  amount: number;               // Amount in USD to withdraw
+  toValues: Array<{ key: string; value: string }>;      // Destination fields (address, etc.)
+  routeValues: Array<{ key: string; value: string }>;   // Route-specific fields
+  agreement: boolean;           // Must be true
+}
+
+// Partner withdrawal order creation response
+export interface CreatePartnerWithdrawalResponse {
+  uid: number;
+  secret: string;
+  route: {
+    to: { name: string; symbol: string };
+    inAmount: number;   // USD amount
+    outAmount: number;  // Crypto amount
+  };
+}
+
+// Partner withdrawal order details
+export interface PartnerWithdrawalOrder {
+  _id: string;
+  uid: number;
+  secret?: string;
+  inAmount: number;
+  outAmount: number;
+  toValues?: Array<{ field: string; name: string; value: string }>;
+  routeValues?: Array<{ field: string; name: string; value: string }>;
+  partner?: string;
+  client?: string;
+  status: string;
+  route: {
+    routeId: string;
+    instructions?: string;
+    to: {
+      name: string;
+      symbol: string;
+      xml?: string;
+      decimal?: number;
+      image?: { files: { type: string; url: string }[] };
+    };
+  };
+  expiresAt: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Partner withdrawal history response
+export interface PartnerWithdrawalHistoryResponse {
+  orders: PartnerWithdrawalOrder[];
+  count: {
+    total: number;
+    pages: number;
+    select_page: number;
+    limit: number;
+    offset: number;
+  };
 }
 
 // ============ News Types ============
@@ -229,10 +514,31 @@ export interface VerificationStatus {
 
 // ============ Contact Types ============
 export interface Contact {
-  id: string;
-  type: 'email' | 'telegram' | 'phone' | 'address';
+  _id: string;
+  name: string;
   value: string;
-  label?: string;
+  link?: string;
+  image?: {
+    files: { type: string; url: string }[];
+  };
+  size?: string;
+  lang: string;
+  positionSort: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OnlineChat {
+  type?: string;
+  api?: string;
+  secret?: string;
+  status: boolean;
+}
+
+export interface ContactsResponse {
+  contacts: Contact[];
+  infoText: string;
+  onlineChat: OnlineChat;
 }
 
 // ============ Page Types ============
@@ -262,4 +568,21 @@ export interface Language {
   code: string;
   name: string;
   isDefault: boolean;
+}
+
+// ============ API Keys Types ============
+export interface ApiKeyAccess {
+  key: string;              // e.g., 'EX_ABC123...'
+  isActive: boolean;
+  secret?: string;          // Only returned on creation (save immediately!)
+  permissions: string[];
+  permission: {             // Deprecated format (kept for compatibility)
+    DEPRECATED: boolean;
+    base: boolean;
+    withdrawal: boolean;
+  };
+  whitelistIPs: string[];
+  lastUse: Date | string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }

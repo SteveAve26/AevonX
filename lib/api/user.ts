@@ -18,9 +18,8 @@ export const userApi = {
   changePassword: (oldPassword: string, newPassword: string) =>
     apiClient.put<{ message: string }>('/user/profile/edit/password', { oldPassword, newPassword }),
 
-  // Edit partner link
-  editPartnerLink: (link: string) =>
-    apiClient.put<{ message: string }>('/user/profile/edit/partner-link', { link }),
+  // Edit partner link (moved to affiliateApi.editPartnerLink)
+  // Use affiliateApi.editPartnerLink(affiliateLink) instead
 
   // Block account (7 days)
   blockAccount: () =>

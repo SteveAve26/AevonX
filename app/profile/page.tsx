@@ -14,8 +14,8 @@ export default function ProfilePage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (user?.username) {
-      setNewUsername(user.username);
+    if (user?.first_name) {
+      setNewUsername(`${user.first_name} ${user.last_name || ''}`.trim());
     }
   }, [user]);
 
@@ -115,7 +115,7 @@ export default function ProfilePage() {
                     className="bg-[#2b3139] px-3 py-1 rounded text-white mt-1"
                   />
                 ) : (
-                  <div className="text-white">{user.username || 'Not set'}</div>
+                  <div className="text-white">{`${user.first_name} ${user.last_name || ''}`.trim() || 'Not set'}</div>
                 )}
               </div>
               {editingUsername ? (
@@ -123,7 +123,7 @@ export default function ProfilePage() {
                   <button
                     onClick={() => {
                       setEditingUsername(false);
-                      setNewUsername(user.username || '');
+                      setNewUsername(`${user.first_name} ${user.last_name || ''}`.trim());
                     }}
                     className="px-4 py-2 text-sm text-[#848e9c] hover:bg-[#2b3139] rounded-lg transition-colors"
                   >
@@ -188,16 +188,16 @@ export default function ProfilePage() {
                 <div>
                   <div className="text-white font-medium">Two-Factor Authentication</div>
                   <div className="text-sm text-[#848e9c]">
-                    {user.otpEnabled ? 'Enabled' : 'Add extra security to your account'}
+                    {user.secure2fa?.active ? 'Enabled' : 'Add extra security to your account'}
                   </div>
                 </div>
               </div>
               <button className={`px-4 py-2 text-sm rounded-lg transition-colors ${
-                user.otpEnabled
+                user.secure2fa?.active
                   ? 'text-[#f6465d] hover:bg-[#f6465d]/10'
                   : 'bg-[#0ecb81] text-white hover:bg-[#0ecb81]/90'
               }`}>
-                {user.otpEnabled ? 'Disable' : 'Enable'}
+                {user.secure2fa?.active ? 'Disable' : 'Enable'}
               </button>
             </div>
 
@@ -209,11 +209,11 @@ export default function ProfilePage() {
                 <div>
                   <div className="text-white font-medium">Verification Status</div>
                   <div className="text-sm text-[#848e9c]">
-                    {user.isVerified ? 'Verified' : 'Not verified - limits apply'}
+                    {user.verificationPerson?.status === 'approved' ? 'Verified' : 'Not verified - limits apply'}
                   </div>
                 </div>
               </div>
-              {!user.isVerified && (
+              {user.verificationPerson?.status !== 'approved' && (
                 <Link
                   href="/verification"
                   className="px-4 py-2 text-sm bg-[#f0b90b] text-black rounded-lg hover:bg-[#d9a60a] transition-colors"

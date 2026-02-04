@@ -5,7 +5,7 @@ import {
   FAQGroup,
   FAQItem,
   Review,
-  Contact,
+  ContactsResponse,
   StaticPage,
   WebAlert,
   Language,
@@ -44,8 +44,10 @@ export const publicApi = {
     apiClient.post<{ message: string }>('/public/reviews/create', data),
 
   // ========== Contacts ==========
-  getContacts: () =>
-    apiClient.get<Contact[]>('/public/contacts/list'),
+  // Get contacts list with optional language filter
+  // @param lang - Language code (optional, 'all' for all languages)
+  getContacts: (lang?: string) =>
+    apiClient.get<ContactsResponse>('/public/contacts/list', lang ? { lang } : undefined),
 
   // ========== Pages ==========
   getStaticPages: () =>
@@ -92,8 +94,11 @@ export const publicApi = {
     apiClient.get<{ id: string; name: string; description: string; price: number }>('/public/products/one', { id }),
 
   // ========== Analytics ==========
-  registerVisit: (data: { page: string; referrer?: string }) =>
-    apiClient.post<void>('/public/visits/register', data),
+  // Register visitor statistics
+  // @param refUrl - Referrer URL (max 250 chars)
+  // @param code - Partner/affiliate code (max 200 chars)
+  registerVisit: (data: { refUrl?: string; code?: string }) =>
+    apiClient.post<Record<string, never>>('/public/visits/register', data),
 
   // ========== Verification (public) ==========
   uploadVerification: (data: FormData) =>

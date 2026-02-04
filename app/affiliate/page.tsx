@@ -26,19 +26,30 @@ export default function AffiliatePage() {
       try {
         const [infoRes, ordersRes] = await Promise.all([
           affiliateApi.getInfo(),
-          affiliateApi.getOrders({ limit: 10 }),
+          affiliateApi.getOrders({ page: 1, limit: 10 }),
         ]);
 
         if (infoRes.success && infoRes.data) {
-          setAffiliateData(infoRes.data);
+          // API returns { affiliate: AffiliateInfo }
+          const data = infoRes.data as { affiliate: AffiliateInfo };
+          setAffiliateData(data.affiliate);
         } else {
           // Use fallback data for demo
           setAffiliateData({
-            partnerLink: 'https://aevonx.com/ref/abc123',
-            totalReferrals: 47,
-            totalEarnings: 1234.56,
-            pendingEarnings: 89.00,
-            availableBalance: 345.67,
+            type: 'byAmount',
+            rate: 0.5,
+            discount: 0,
+            link: 'abc123',
+            rateKey: 'public',
+            rateExportFormatType: 'default',
+            minReward: '0',
+            ordersAmountInUSD: 5000,
+            totalReceived: 1234.56,
+            balance: 345.67,
+            waitedPartnerRewardsUSD: 89.00,
+            countPartners: 47,
+            countSuccessOrders: 156,
+            countAllOrders: 200,
           });
         }
 
@@ -49,11 +60,20 @@ export default function AffiliatePage() {
         console.error('Failed to fetch affiliate data:', err);
         // Use fallback data
         setAffiliateData({
-          partnerLink: 'https://aevonx.com/ref/abc123',
-          totalReferrals: 47,
-          totalEarnings: 1234.56,
-          pendingEarnings: 89.00,
-          availableBalance: 345.67,
+          type: 'byAmount',
+          rate: 0.5,
+          discount: 0,
+          link: 'abc123',
+          rateKey: 'public',
+          rateExportFormatType: 'default',
+          minReward: '0',
+          ordersAmountInUSD: 5000,
+          totalReceived: 1234.56,
+          balance: 345.67,
+          waitedPartnerRewardsUSD: 89.00,
+          countPartners: 47,
+          countSuccessOrders: 156,
+          countAllOrders: 200,
         });
       } finally {
         setIsLoading(false);
@@ -65,9 +85,11 @@ export default function AffiliatePage() {
     }
   }, [isAuthenticated, authLoading]);
 
+  const referralLink = affiliateData ? `https://aevonx.com/?ref=${affiliateData.link}` : '';
+
   const copyLink = () => {
     if (!affiliateData) return;
-    navigator.clipboard.writeText(affiliateData.partnerLink);
+    navigator.clipboard.writeText(referralLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -159,7 +181,7 @@ export default function AffiliatePage() {
               <Users className="text-[#1e90ff]" size={20} />
             </div>
           </div>
-          <div className="text-2xl font-bold text-white">{affiliateData.totalReferrals}</div>
+          <div className="text-2xl font-bold text-white">{affiliateData.countPartners}</div>
           <div className="text-sm text-[#848e9c]">Total Referrals</div>
         </div>
 
@@ -169,7 +191,7 @@ export default function AffiliatePage() {
               <DollarSign className="text-[#0ecb81]" size={20} />
             </div>
           </div>
-          <div className="text-2xl font-bold text-white">${affiliateData.totalEarnings.toFixed(2)}</div>
+          <div className="text-2xl font-bold text-white">${affiliateData.totalReceived.toFixed(2)}</div>
           <div className="text-sm text-[#848e9c]">Total Earnings</div>
         </div>
 
@@ -179,7 +201,7 @@ export default function AffiliatePage() {
               <TrendingUp className="text-[#f0b90b]" size={20} />
             </div>
           </div>
-          <div className="text-2xl font-bold text-white">${affiliateData.pendingEarnings.toFixed(2)}</div>
+          <div className="text-2xl font-bold text-white">${affiliateData.waitedPartnerRewardsUSD.toFixed(2)}</div>
           <div className="text-sm text-[#848e9c]">Pending</div>
         </div>
 
@@ -189,7 +211,7 @@ export default function AffiliatePage() {
               <DollarSign className="text-[#9b59b6]" size={20} />
             </div>
           </div>
-          <div className="text-2xl font-bold text-white">${affiliateData.availableBalance.toFixed(2)}</div>
+          <div className="text-2xl font-bold text-white">${affiliateData.balance.toFixed(2)}</div>
           <div className="text-sm text-[#848e9c]">Available</div>
         </div>
       </div>
@@ -205,7 +227,7 @@ export default function AffiliatePage() {
         </p>
         <div className="flex items-center gap-3">
           <code className="flex-1 bg-[#0b0e11] px-4 py-3 rounded-lg text-white break-all">
-            {affiliateData.partnerLink}
+            {referralLink}
           </code>
           <button
             onClick={copyLink}
@@ -262,20 +284,20 @@ export default function AffiliatePage() {
         {referralOrders.length > 0 ? (
           <div className="space-y-3">
             {referralOrders.map((order) => (
-              <div key={order.id} className="flex items-center justify-between py-3 border-b border-[#2b3139] last:border-0">
+              <div key={order.uid} className="flex items-center justify-between py-3 border-b border-[#2b3139] last:border-0">
                 <div>
                   <div className="text-white font-medium">Referral Commission</div>
                   <div className="text-xs text-[#848e9c]">{new Date(order.createdAt).toLocaleDateString()}</div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`text-xs px-2 py-1 rounded ${
-                    order.status === 'credited'
+                    order.status === 'done'
                       ? 'bg-[#0ecb81]/10 text-[#0ecb81]'
                       : 'bg-[#f0b90b]/10 text-[#f0b90b]'
                   }`}>
                     {order.status}
                   </span>
-                  <span className="text-[#0ecb81] font-medium">+${order.commission.toFixed(2)}</span>
+                  <span className="text-[#0ecb81] font-medium">+${order.partnerFee.amountInUSD.toFixed(2)}</span>
                 </div>
               </div>
             ))}
@@ -291,7 +313,7 @@ export default function AffiliatePage() {
       <div className="bg-[#1e2329] rounded-xl p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Withdraw Earnings</h3>
         <p className="text-[#848e9c] text-sm mb-4">
-          Minimum withdrawal: $50.00. Your available balance: ${affiliateData.availableBalance.toFixed(2)}
+          Minimum withdrawal: $50.00. Your available balance: ${affiliateData.balance.toFixed(2)}
         </p>
         <button className="flex items-center gap-2 px-6 py-3 bg-[#f0b90b] text-black font-semibold rounded-lg hover:bg-[#d9a60a] transition-colors">
           Withdraw to Wallet
