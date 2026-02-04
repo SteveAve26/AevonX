@@ -2,14 +2,10 @@ import {
   Currency,
   ExchangeRoute,
   Review,
-  FAQGroup,
-  FAQItem,
   NewsArticle,
   ApiCurrency,
   ApiRoute,
   ApiReview,
-  ApiFaqGroup,
-  ApiFaqItem,
   ApiNewsArticle,
 } from '@/types';
 
@@ -73,47 +69,6 @@ export function transformReview(apiReview: ApiReview, index: number): Review {
 // Transform array of API reviews
 export function transformReviews(apiReviews: ApiReview[]): Review[] {
   return apiReviews.map((review, index) => transformReview(review, index));
-}
-
-// Transform API FAQ group to internal FAQGroup type
-export function transformFaqGroup(apiGroup: ApiFaqGroup, index: number): FAQGroup {
-  return {
-    id: `${apiGroup.groupName}-${apiGroup.lang}`,
-    name: apiGroup.groupName,
-    order: index,
-  };
-}
-
-// Transform array of API FAQ groups (filter by language)
-export function transformFaqGroups(apiGroups: ApiFaqGroup[], lang: string = 'en'): FAQGroup[] {
-  // Try to get groups in requested language, fallback to first available
-  let filtered = apiGroups.filter(g => g.lang === lang);
-  if (filtered.length === 0) {
-    // Get unique group names
-    const seen = new Set<string>();
-    filtered = apiGroups.filter(g => {
-      if (seen.has(g.groupName)) return false;
-      seen.add(g.groupName);
-      return true;
-    });
-  }
-  return filtered.map((group, index) => transformFaqGroup(group, index));
-}
-
-// Transform API FAQ item to internal FAQItem type
-export function transformFaqItem(apiItem: ApiFaqItem): FAQItem {
-  return {
-    id: apiItem._id,
-    groupId: apiItem.groupName,
-    question: apiItem.question,
-    answer: apiItem.answer,
-    order: 0,
-  };
-}
-
-// Transform array of API FAQ items
-export function transformFaqItems(apiItems: ApiFaqItem[]): FAQItem[] {
-  return apiItems.map(item => transformFaqItem(item));
 }
 
 // Transform API news article to internal NewsArticle type

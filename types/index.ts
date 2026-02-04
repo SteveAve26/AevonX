@@ -468,18 +468,43 @@ export interface NewsComment {
 }
 
 // ============ FAQ Types ============
-export interface FAQGroup {
-  id: string;
-  name: string;
-  order: number;
+
+// Single FAQ item from the API
+export interface FAQItem {
+  _id: string;
+  title: string;
+  content: string;
+  link?: string;
+  group?: string;
+  lang?: string;
+  position_sort?: number;
+  status?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface FAQItem {
-  id: string;
-  groupId: string;
-  question: string;
-  answer: string;
-  order: number;
+// FAQ list response with pagination
+export interface FAQListResponse {
+  faq: FAQItem[];
+  count: {
+    total: number;
+    pages: number;
+    select_page: number;
+    limit: number;
+    offset: number;
+  };
+}
+
+// FAQ group item
+export interface FAQGroupItem {
+  groupName: string;
+  lang: string;
+  count: number;
+}
+
+// FAQ groups response
+export interface FAQGroupsResponse {
+  faqGroups: FAQGroupItem[];
 }
 
 // ============ Review Types ============
@@ -867,4 +892,16 @@ export interface OrderChartResponse {
     doneOrders: number;
     count: number;
   }>;
+}
+
+// Favorite rate item (popular/featured rates)
+export interface FavoriteRate {
+  name: string;           // Display name for the rate
+  rate: number;           // Exchange rate value
+  service?: string;       // Service name (optional)
+}
+
+// Favorite rates response
+export interface FavoriteRatesResponse {
+  rates: FavoriteRate[];
 }

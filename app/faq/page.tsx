@@ -3,62 +3,67 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown, Search, Loader2 } from 'lucide-react';
 import { publicApi } from '@/lib/api';
-import { transformFaqGroups, transformFaqItems } from '@/lib/api/transformers';
-import { faqGroups as fallbackGroups, faqItems as fallbackItems } from '@/lib/mock/data';
-import { FAQGroup, FAQItem, ApiFaqGroup, ApiFaqItem } from '@/types';
+import { FAQItem, FAQGroupItem } from '@/types';
 import { cn } from '@/lib/utils';
 
 export default function FAQPage() {
-  const [groups, setGroups] = useState<FAQGroup[]>(fallbackGroups);
-  const [items, setItems] = useState<FAQItem[]>(fallbackItems);
+  const [groups, setGroups] = useState<FAQGroupItem[]>([]);
+  const [items, setItems] = useState<FAQItem[]>([]);
   const [activeGroup, setActiveGroup] = useState<string>('');
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [totalCount, setTotalCount] = useState(0);
 
-  // Fetch FAQ groups and items
+  // Fetch FAQ groups on mount
   useEffect(() => {
-    async function fetchFAQ() {
-      setIsLoading(true);
+    async function fetchGroups() {
       try {
-        const [groupsRes, itemsRes] = await Promise.all([
-          publicApi.getFaqGroups(),
-          publicApi.getFaqList(),
-        ]);
-
-        if (groupsRes.success && groupsRes.data) {
-          const apiGroups = groupsRes.data as unknown as ApiFaqGroup[];
-          const transformedGroups = transformFaqGroups(apiGroups, 'en');
-          setGroups(transformedGroups);
-          if (transformedGroups.length > 0 && !activeGroup) {
-            setActiveGroup(transformedGroups[0].id);
+        const response = await publicApi.getFaqGroups({ lang: 'en' });
+        if (response.success && response.data?.faqGroups) {
+          setGroups(response.data.faqGroups);
+          // Set first group as active
+          if (response.data.faqGroups.length > 0) {
+            setActiveGroup(response.data.faqGroups[0].groupName);
           }
         }
+      } catch (err) {
+        console.error('Failed to fetch FAQ groups:', err);
+      }
+    }
+    fetchGroups();
+  }, []);
 
-        if (itemsRes.success && itemsRes.data) {
-          const apiItems = itemsRes.data as unknown as ApiFaqItem[];
-          const transformedItems = transformFaqItems(apiItems);
-          setItems(transformedItems);
+  // Fetch FAQ items when group changes or search
+  useEffect(() => {
+    async function fetchItems() {
+      setIsLoading(true);
+      try {
+        const response = await publicApi.getFaqList({
+          page: 1,
+          limit: 50,
+          lang: 'en',
+          ...(activeGroup && !search && { group: activeGroup }),
+          ...(search && { search }),
+        });
+
+        if (response.success && response.data) {
+          setItems(response.data.faq || []);
+          setTotalCount(response.data.count?.total || 0);
         }
       } catch (err) {
-        console.error('Failed to fetch FAQ:', err);
-        // Use fallback data
-        if (fallbackGroups.length > 0) {
-          setActiveGroup(fallbackGroups[0].id);
-        }
+        console.error('Failed to fetch FAQ items:', err);
+        setItems([]);
       } finally {
         setIsLoading(false);
       }
     }
-    fetchFAQ();
-  }, []);
 
-  // Set initial active group when groups load
-  useEffect(() => {
-    if (groups.length > 0 && !activeGroup) {
-      setActiveGroup(groups[0].id);
+    // Only fetch if we have an active group or search term
+    if (activeGroup || search) {
+      fetchItems();
     }
-  }, [groups, activeGroup]);
+  }, [activeGroup, search]);
 
   const toggleItem = (id: string) => {
     setOpenItems((prev) => {
@@ -72,26 +77,19 @@ export default function FAQPage() {
     });
   };
 
-  const filteredItems = items.filter((item) => {
-    const matchesGroup = !search && item.groupId === activeGroup;
-    const matchesSearch =
-      search &&
-      (item.question.toLowerCase().includes(search.toLowerCase()) ||
-        item.answer.toLowerCase().includes(search.toLowerCase()));
-    return matchesGroup || matchesSearch;
-  });
+  // Debounce search
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  if (isLoading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        <h1 className="text-3xl font-bold text-white mb-2">Frequently Asked Questions</h1>
-        <p className="text-[#848e9c] mb-8">Find answers to common questions about AevonX</p>
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="animate-spin text-[#f0b90b]" size={32} />
-        </div>
-      </div>
-    );
-  }
+  // Use debounced search for API calls
+  useEffect(() => {
+    if (debouncedSearch !== search) return;
+  }, [debouncedSearch, search]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
@@ -111,57 +109,76 @@ export default function FAQPage() {
       </div>
 
       {/* Category Tabs */}
-      {!search && (
+      {!search && groups.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-8">
           {groups.map((group) => (
             <button
-              key={group.id}
-              onClick={() => setActiveGroup(group.id)}
+              key={group.groupName}
+              onClick={() => setActiveGroup(group.groupName)}
               className={cn(
                 'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-                activeGroup === group.id
+                activeGroup === group.groupName
                   ? 'bg-[#f0b90b] text-black'
                   : 'bg-[#1e2329] text-[#848e9c] hover:text-white'
               )}
             >
-              {group.name}
+              {group.groupName}
+              <span className="ml-2 text-xs opacity-70">({group.count})</span>
             </button>
           ))}
         </div>
       )}
 
-      {/* FAQ Items */}
-      <div className="space-y-3">
-        {filteredItems.map((item) => (
-          <div
-            key={item.id}
-            className="bg-[#1e2329] rounded-xl overflow-hidden"
-          >
-            <button
-              onClick={() => toggleItem(item.id)}
-              className="w-full flex items-center justify-between p-5 text-left"
-            >
-              <span className="text-white font-medium pr-4">{item.question}</span>
-              <ChevronDown
-                size={20}
-                className={cn(
-                  'text-[#848e9c] transition-transform flex-shrink-0',
-                  openItems.has(item.id) && 'rotate-180'
-                )}
-              />
-            </button>
-            {openItems.has(item.id) && (
-              <div className="px-5 pb-5 text-[#848e9c] border-t border-[#2b3139] pt-4">
-                {item.answer}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="animate-spin text-[#f0b90b]" size={32} />
+        </div>
+      )}
 
-      {filteredItems.length === 0 && (
+      {/* FAQ Items */}
+      {!isLoading && (
+        <div className="space-y-3">
+          {items.map((item) => (
+            <div
+              key={item._id}
+              className="bg-[#1e2329] rounded-xl overflow-hidden"
+            >
+              <button
+                onClick={() => toggleItem(item._id)}
+                className="w-full flex items-center justify-between p-5 text-left"
+              >
+                <span className="text-white font-medium pr-4">{item.title}</span>
+                <ChevronDown
+                  size={20}
+                  className={cn(
+                    'text-[#848e9c] transition-transform flex-shrink-0',
+                    openItems.has(item._id) && 'rotate-180'
+                  )}
+                />
+              </button>
+              {openItems.has(item._id) && (
+                <div
+                  className="px-5 pb-5 text-[#848e9c] border-t border-[#2b3139] pt-4 prose prose-invert prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: item.content }}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* No Results */}
+      {!isLoading && items.length === 0 && (
         <div className="text-center py-12 text-[#848e9c]">
-          No questions found matching your search.
+          {search ? 'No questions found matching your search.' : 'No questions available in this category.'}
+        </div>
+      )}
+
+      {/* Results Count */}
+      {!isLoading && items.length > 0 && (
+        <div className="mt-4 text-sm text-[#848e9c]">
+          Showing {items.length} of {totalCount} questions
         </div>
       )}
 

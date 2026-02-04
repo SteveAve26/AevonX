@@ -2,8 +2,9 @@ import apiClient from './config';
 import {
   NewsArticle,
   NewsComment,
-  FAQGroup,
   FAQItem,
+  FAQListResponse,
+  FAQGroupsResponse,
   Review,
   ContactsResponse,
   StaticPage,
@@ -27,14 +28,46 @@ export const publicApi = {
     apiClient.get<NewsComment[]>('/public/news/comment/get', { newsId }),
 
   // ========== FAQ ==========
-  getFaqGroups: () =>
-    apiClient.get<FAQGroup[]>('/public/faq/get/group'),
 
-  getFaqList: (groupId?: string) =>
-    apiClient.get<FAQItem[]>('/public/faq/get/list', groupId ? { groupId } : undefined),
+  // Get one FAQ question by ID or link
+  // @param id - FAQ ObjectID (optional)
+  // @param link - FAQ link/slug (max 100 chars, optional)
+  // Note: Either id or link must be provided
+  getFaqItem: (params: { id?: string; link?: string }) =>
+    apiClient.get<FAQItem>('/public/faq/get/one', params as Record<string, string>),
 
-  getFaqItem: (id: string) =>
-    apiClient.get<FAQItem>('/public/faq/get/one', { id }),
+  // Get list of FAQ questions with pagination and filtering
+  // @param page - Page number (required)
+  // @param limit - Items per page (required)
+  // @param lang - Language code (max 5 chars, optional, 'all' for all languages)
+  // @param search - Search query (max 255 chars, optional)
+  // @param sortKey - Sort field (optional)
+  // @param sortType - Sort direction: 'asc' or 'desc' (optional)
+  // @param group - Filter by group name (max 255 chars, optional, 'all' for all groups)
+  getFaqList: (params: {
+    page: number;
+    limit: number;
+    lang?: string;
+    search?: string;
+    sortKey?: string;
+    sortType?: 'asc' | 'desc';
+    group?: string;
+  }) =>
+    apiClient.get<FAQListResponse>('/public/faq/get/list', {
+      page: String(params.page),
+      limit: String(params.limit),
+      ...(params.lang && { lang: params.lang }),
+      ...(params.search && { search: params.search }),
+      ...(params.sortKey && { sortKey: params.sortKey }),
+      ...(params.sortType && { sortType: params.sortType }),
+      ...(params.group && { group: params.group }),
+    }),
+
+  // Get list of FAQ groups
+  // @param lang - Language code (max 5 chars, optional)
+  // @param search - Search query (max 60 chars, optional)
+  getFaqGroups: (params?: { lang?: string; search?: string }) =>
+    apiClient.get<FAQGroupsResponse>('/public/faq/get/group', params as Record<string, string>),
 
   // ========== Reviews ==========
   getReviews: (params?: { page?: number; limit?: number }) =>

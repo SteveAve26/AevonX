@@ -1,4 +1,4 @@
-import { Currency, ExchangeRoute, ExchangeOrder, Wallet, Review, FAQItem, FAQGroup, NewsArticle } from '@/types';
+import { Currency, ExchangeRoute, ExchangeOrder, Wallet, Review, NewsArticle } from '@/types';
 
 // ============ Currencies ============
 export const currencies: Currency[] = [
@@ -190,59 +190,6 @@ export const reviews: Review[] = [
     content: 'Good service overall. The interface is easy to use.',
     createdAt: new Date(Date.now() - 259200000).toISOString(),
     isVerified: false,
-  },
-];
-
-// ============ FAQ ============
-export const faqGroups: FAQGroup[] = [
-  { id: 'general', name: 'General Questions', order: 1 },
-  { id: 'exchange', name: 'Exchange Process', order: 2 },
-  { id: 'security', name: 'Security', order: 3 },
-  { id: 'fees', name: 'Fees & Limits', order: 4 },
-];
-
-export const faqItems: FAQItem[] = [
-  {
-    id: 'faq-1',
-    groupId: 'general',
-    question: 'What is AevonX?',
-    answer: 'AevonX is a fast and secure cryptocurrency exchange platform that allows you to swap between various cryptocurrencies and fiat currencies with competitive rates.',
-    order: 1,
-  },
-  {
-    id: 'faq-2',
-    groupId: 'general',
-    question: 'Do I need to register to make an exchange?',
-    answer: 'No, you can make exchanges without registration. However, creating an account gives you access to order history, affiliate program, and better limits.',
-    order: 2,
-  },
-  {
-    id: 'faq-3',
-    groupId: 'exchange',
-    question: 'How long does an exchange take?',
-    answer: 'Most exchanges are completed within 5-30 minutes, depending on the blockchain network congestion and the currencies involved.',
-    order: 1,
-  },
-  {
-    id: 'faq-4',
-    groupId: 'exchange',
-    question: 'What happens if I send the wrong amount?',
-    answer: 'If you send a different amount than specified, the exchange will be recalculated based on the actual amount received, minus any applicable fees.',
-    order: 2,
-  },
-  {
-    id: 'faq-5',
-    groupId: 'security',
-    question: 'Is my data secure?',
-    answer: 'Yes, we use industry-standard encryption and security measures to protect your data. We do not store sensitive information longer than necessary.',
-    order: 1,
-  },
-  {
-    id: 'faq-6',
-    groupId: 'fees',
-    question: 'What are the exchange fees?',
-    answer: 'Our fees are already included in the exchange rate you see. There are no hidden fees. Network fees for blockchain transactions are separate.',
-    order: 1,
   },
 ];
 

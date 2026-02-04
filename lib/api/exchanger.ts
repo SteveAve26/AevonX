@@ -8,6 +8,7 @@ import {
   LastOrdersResponse,
   OrderHistoryResponse,
   OrderChartResponse,
+  FavoriteRatesResponse,
 } from '@/types';
 
 export const exchangerApi = {
@@ -86,9 +87,10 @@ export const exchangerApi = {
     return apiClient.post<{ success: boolean }>('/public/exchanger/order/files/create', files);
   },
 
-  // Get favorite/featured rates
+  // Get favorite/featured rates (popular exchange rates displayed on homepage)
+  // Returns rates calculated from parsers or routes
   getFavoriteRates: () =>
-    apiClient.get<{ routes: ApiRoute[] }>('/public/exchanger/favorite/get'),
+    apiClient.get<FavoriteRatesResponse>('/public/exchanger/favorite/get'),
 
   // ========== User endpoints (require auth) ==========
 
